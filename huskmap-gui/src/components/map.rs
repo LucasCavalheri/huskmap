@@ -163,29 +163,6 @@ fn draw(canvas: &SkCanvas, w: f32, h: f32, f: &Frame<'_>) {
         }
     }
     canvas.draw_circle((cx, cy), r * OUTER_R, &stroke(theme::hairline(), 1.0, 1.0));
-    canvas.draw_circle(
-        (cx, cy),
-        r * (OUTER_R + 0.035),
-        &stroke(theme::hairline_soft(), 1.0, 1.0),
-    );
-
-    // Bezel ticks.
-    for t in 0..144 {
-        let a = t as f32 / 144.0 * TAU;
-        let major = t % 12 == 0;
-        let (x0, y0) = f.dial.at(a, OUTER_R + 0.035);
-        let (x1, y1) = f.dial.at(a, OUTER_R + if major { 0.075 } else { 0.05 });
-        let tick = stroke(
-            if major {
-                theme::copper()
-            } else {
-                theme::dust()
-            },
-            if major { 0.7 } else { 0.35 },
-            if major { 1.2 } else { 0.8 },
-        );
-        canvas.draw_line((x0, y0), (x1, y1), &tick);
-    }
 
     // Sonar beam with a fading tail.
     let beam = f.sweep;
@@ -466,7 +443,7 @@ impl Component for HuskMap {
                             .child(caps(&label.label, color)),
                     )
                     .child(mono(
-                        format!("{} · {}", label.bytes, label.count),
+                        label.bytes.clone(),
                         theme::TEXT_SM,
                         if label.active {
                             theme::ash()
@@ -492,7 +469,7 @@ impl Component for HuskMap {
         let mut wanted: Vec<&MapNode> = self
             .nodes
             .iter()
-            .filter(|n| n.rank < 10 || n.selected || hover_id.as_ref() == Some(&n.id))
+            .filter(|n| n.rank < 5 || n.selected || hover_id.as_ref() == Some(&n.id))
             .collect();
         wanted.sort_by_key(|n| (!(n.selected || hover_id.as_ref() == Some(&n.id)), n.rank));
         let candidates: Vec<LabelBox> = wanted
