@@ -1,0 +1,132 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  CARGO_TERM_COLOR: always
+  HUSKMAP_NO_UPDATE_CHECK: "1"
+
+jobs:
+  validate:
+    name: Validate release metadata
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Tag, Cargo.toml and CHANGELOG.md agree
+        run: bash scripts/validate-release.sh . "$GITHUB_REF_NAME"
+
+  package:
+    needs: validate
+    name: Build and package (${{ matrix.arch }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            target: x86_64-unknown-linux-gnu
+            arch: amd64
+          - os: ubuntu-24.04-arm
+            target: aarch64-unknown-linux-gnu
+            arch: arm64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
+        with:
+          targets: ${{ matrix.target }}
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      - name: Install build and packaging dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang libfontconfig-dev libfreetype-dev libegl-dev libgl-dev libx11-dev libxkbcommon-dev libwayland-dev dpkg-dev rpm zstd
+      - name: Release tests
+        run: cargo test --workspace --all-features --locked --target "${{ matrix.target }}"
+      - name: Build release binary
+        run: cargo build --release --locked --target "${{ matrix.target }}" -p huskmap-cli
+      - name: Build packages
+        run: |
+          set -euo pipefail
+          version="${GITHUB_REF_NAME#v}"
+          packaging/build-linux-packages.sh \
+            "target/${{ matrix.target }}/release/huskmap" "$version" "${{ matrix.arch }}" dist-release
+          bash scripts/package.test.sh "target/${{ matrix.target }}/release/huskmap" "${{ matrix.arch }}"
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: packages-${{ matrix.arch }}
+          if-no-files-found: error
+          path: dist-release/*
+
+  publish:
+    needs: [validate, package]
+    name: Publish GitHub Release
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          merge-multiple: true
+          path: dist-release
+      - name: Every asset the updater and install.sh ask for is present
+        run: |
+          set -euo pipefail
+          v="${GITHUB_REF_NAME#v}"
+          for f in "huskmap_${v}_amd64.deb" "huskmap_${v}_arm64.deb" \
+                   "huskmap-${v}-1.x86_64.rpm" "huskmap-${v}-1.aarch64.rpm" \
+                   "huskmap-${v}-1-x86_64.pkg.tar.zst" "huskmap-${v}-1-aarch64.pkg.tar.zst" \
+                   "huskmap-${v}-r0-x86_64.apk" "huskmap-${v}-r0-aarch64.apk" \
+                   huskmap-linux-x64.tar.gz huskmap-linux-arm64.tar.gz; do
+            [ -f "dist-release/$f" ] || { echo "missing $f"; exit 1; }
+          done
+      - name: SHA256SUMS
+        run: bash scripts/generate-sha256sums.sh dist-release
+      - name: Attest release artifacts
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: dist-release/*
+      - name: Create or update the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TAG="$GITHUB_REF_NAME"
+          VERSION="${TAG#v}"
+          BASE="${VERSION%%-*}"
+          FLAGS=(--latest)
+          [[ "$TAG" == *-* ]] && FLAGS=(--prerelease --latest=false)
+          {
+            echo "## huskmap ${VERSION}"
+            echo
+            awk -v ver="$BASE" '
+              $0 ~ "^## \\[?v?" ver "\\]?( |$)" { p = 1; next }
+              p && /^## / { exit }
+              p { print }
+            ' CHANGELOG.md
+            echo
+            echo 'Install or update: `curl -fsSL https://raw.githubusercontent.com/LucasCavalheri/huskmap/main/install.sh | bash`'
+          } > release-notes.md
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" dist-release/* --clobber
+            gh release edit "$TAG" --notes-file release-notes.md "${FLAGS[@]}"
+          else
+            gh release create "$TAG" dist-release/* --title "huskmap ${TAG}" --notes-file release-notes.md "${FLAGS[@]}"
+          fi
