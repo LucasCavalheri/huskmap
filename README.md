@@ -1,135 +1,204 @@
-# huskmap
+<p align="center">
+  <img src="packaging/icons/huskmap.svg" width="96" height="96" alt="huskmap">
+</p>
 
-Your agents left things behind. Here is what they weigh.
+<h1 align="center">huskmap</h1>
 
-**Website:** [huskmap.lucascavalheri.com.br](https://huskmap.lucascavalheri.com.br) · source in [`site/`](site/)
+<p align="center">
+  <strong>Your AI agents left things behind. Here is what they weigh.</strong><br>
+  A calm little map of the worktrees, <code>node_modules</code>, sessions and caches that coding agents leave on your Linux disk.
+</p>
 
-huskmap is a Linux desktop + CLI map of what AI coding agents leave on your disk: Claude Code, Codex, Cursor, OpenCode, Aider, Gemini CLI, Grok and kin. It is not a generic disk tool. It reads agent homes, session stores, package caches and git worktree topology, and it knows who is still working where.
+<p align="center">
+  <a href="https://huskmap.lucascavalheri.com.br">🌐 Website</a>
+  ·
+  <a href="https://github.com/LucasCavalheri/huskmap/releases/latest">📦 Download</a>
+  ·
+  <a href="CHANGELOG.md">📝 Changelog</a>
+  ·
+  <a href="https://huskmap.lucascavalheri.com.br/pt-br/">🇧🇷 Português</a>
+</p>
 
-Linux only, every Linux: any distro, glibc or musl, X11 or Wayland. Paths follow the XDG base directory spec.
+<p align="center">
+  <a href="https://github.com/LucasCavalheri/huskmap/releases/latest"><img src="https://img.shields.io/github/v/release/LucasCavalheri/huskmap?label=release&color=a5582a" alt="Latest release"></a>
+  <a href="https://github.com/LucasCavalheri/huskmap/actions/workflows/ci.yml"><img src="https://github.com/LucasCavalheri/huskmap/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-3d7a5e.svg" alt="MIT License"></a>
+  <img src="https://img.shields.io/badge/platform-Linux-1c1a17.svg" alt="Linux">
+  <img src="https://img.shields.io/badge/built%20with-Rust-b27a1c.svg" alt="Built with Rust">
+</p>
 
-## What it finds
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="site/public/shots/map-en-dark-1480.webp">
+    <img src="site/public/shots/map-en-light-1480.webp" width="880" alt="The huskmap map: every dot is something an agent left on disk">
+  </picture>
+</p>
 
-| Kind | What | Examples |
-| ---- | ---- | -------- |
-| Worktrees | linked git worktrees and agent slots | `*-worktrees/*`, `proj/.claude/worktrees/*`, `~/.codex/worktrees/*/*`, `~/.cursor/worktrees/*/*` |
-| Dependencies | build and dependency dirs, only with a marker | `node_modules` + `package.json`, `target` + `Cargo.toml`, `.venv` + `pyvenv.cfg`, `.next`, `.turbo`, `.nuxt`, `.svelte-kit`, `.pytest_cache`, `.tox` |
-| Package caches | package-manager caches | npm, pnpm, yarn, bun, pip, uv, poetry, cargo, go build, playwright |
-| Sessions | agent session stores | `~/.claude/projects/*`, `~/.codex/sessions/Y/M/D`, `~/.grok/sessions/*` |
-| Agent caches, Logs | agent caches, logs, prompt history | `~/.claude/debug`, `~/.codex/cache`, `*.log` |
+---
 
-## Worktrees are guarded
+## 🤔 Why
 
-Before anything can go, huskmap asks:
+Claude Code, Codex, Cursor and friends work in parallel **git worktrees**. Each one grows its own `node_modules` or `target`, every project keeps a session history, and the package caches pile up. After a few weeks that is tens of gigabytes nobody remembers creating.
 
-- **Is someone in there?** Any process (agent, shell, editor, dev server) whose working directory is inside the worktree, read from `/proc`. Occupied worktrees never go, not even with `--force`.
-- **Uncommitted changes?** Guarded; `--force` lifts it.
-- **Commits that exist nowhere else?** Commits reachable from `HEAD` and from no other branch, remote or tag. A branch merged locally or pushed is fine; a worktree holding the only copy is guarded.
-- **Locked by git, a primary checkout, outside the scan roots?** Guarded or untouchable.
-- **Unique secrets?** A worktree `.env` that is a byte copy of the primary checkout's does not guard; one that exists only there does, absolutely.
+huskmap finds all of it, shows what is **safe to remove**, and never touches work you have not saved. It is not a generic disk tool: it understands agent folders, session stores and worktree topology, and it knows who is still working where.
 
-Claude and Grok sessions are matched to their project: a session whose project directory is gone is marked orphaned; one whose agent is running there is occupied.
+## ✨ Highlights
 
-## Install
+| | |
+|---|---|
+| 🗺️ **A map, not a list** | Every dot is one item. The slice is its type, the distance from the center its age, the size its weight, the color what you may do. |
+| 🛡️ **Your work is safe** | Folders in use, uncommitted changes, commits that exist nowhere else, the main checkout and secret files are protected. |
+| 🗑️ **Trash, never delete** | Everything goes to the system trash after one last check, so you can always restore it. |
+| 🔎 **Filters you can type** | `kind:deps size:>500mb age:>30d -is:blocked`, in English or Portuguese, on the map and the list. |
+| 🌗 **Light and dark** | Daylight and Afterlife, or follow your desktop. Press `t`. |
+| 🇧🇷 **English and Portuguese** | Picked from your settings, timezone or locale. Switch any time. |
+| ⌨️ **CLI and TUI too** | `huskmap scan --json` for scripts, `huskmap map` on a machine without a screen. |
+| 🔒 **Almost offline** | The only network call is a daily update check. No telemetry, no accounts. |
 
-```
+## 🚀 Install
+
+```bash
 curl -fsSL https://huskmap.lucascavalheri.com.br/install.sh | bash
 ```
 
-The script reads `uname` and the package manager, downloads the matching release asset, checks it against the release's `SHA256SUMS`, and installs it. `--user` installs the portable build into `~/.local` without root; `--print-plan` shows what it would fetch.
+The script picks the package for your processor and distro, checks it against the release's `SHA256SUMS` and installs it. `--user` installs into `~/.local` without root, `--print-plan` shows what it would fetch. If huskmap is open, it waits for anything moving to the trash and reopens the map with your marks.
 
-If huskmap is open it says what is in flight before touching anything: a running apply is waited for and never interrupted, a scan (read-only) simply stops, and marked items are kept. The window closes, updates, and reopens with its marks.
+Or grab a package from the [website](https://huskmap.lucascavalheri.com.br/#download) or the [latest release](https://github.com/LucasCavalheri/huskmap/releases/latest):
 
-| File | Family |
-| ---- | ------ |
-| `huskmap_<ver>_amd64.deb` / `_arm64.deb` | Debian, Ubuntu, Mint, Pop!_OS, Kali, … |
-| `huskmap-<ver>-1.x86_64.rpm` / `.aarch64.rpm` | Fedora, RHEL, Rocky, Alma, openSUSE, … |
-| `huskmap-<ver>-1-x86_64.pkg.tar.zst` | Arch, Manjaro, EndeavourOS |
-| `huskmap-<ver>-r0-x86_64.apk` | Alpine (with `gcompat`) |
-| `huskmap-linux-x64.tar.gz` / `-arm64` | Gentoo, Void, NixOS, anywhere else |
+| 📦 File | 🐧 Distros |
+| ------- | ---------- |
+| `huskmap_<ver>_amd64.deb` · `_arm64.deb` | Debian, Ubuntu, Mint, Pop!_OS, Kali |
+| `huskmap-<ver>-1.x86_64.rpm` · `.aarch64.rpm` | Fedora, RHEL, Rocky, Alma, openSUSE |
+| `huskmap-<ver>-1-x86_64.pkg.tar.zst` · `-aarch64` | Arch, Manjaro, EndeavourOS |
+| `huskmap-<ver>-r0-x86_64.apk` · `-aarch64` | Alpine (with `gcompat`) |
+| `huskmap-linux-x64.tar.gz` · `-arm64` | Gentoo, Void, NixOS, anything else |
 
-Packages carry the `.desktop` entry, icons, man page and bash/zsh/fish completions.
+Every package brings the desktop entry, icons, man page and bash, zsh and fish completions. glibc and musl, x86_64 and ARM64, X11 and Wayland.
 
-## Updates
+## 🧭 How it works
 
-The desktop map asks GitHub Releases for a newer huskmap at most once a day. A chip appears in the status bar (`u`); the update modal shows the notes, then downloads, verifies the SHA256, installs the way this copy was installed (deb, rpm, pacman or apk through `pkexec`, or an in-place swap for the portable build) and restarts with your marks. Skip a version, or stop checking, from the same modal.
+1. 🔍 **Scan.** huskmap reads agent folders, your project folders and package caches. It only reads.
+2. 👀 **Look.** Open the map or the list. Click anything to see its size, age, branch and what protects it.
+3. ✅ **Mark.** Tick what can go, or filter and press **Mark N removable**.
+4. 🗑️ **Move to trash.** Read the summary and confirm. Everything is checked again first.
 
+The first launch opens a built-in guide (`?` any time) that explains the map, the six types, the protections, every filter and every key.
+
+## 🧺 What it finds
+
+| | Type | What | Examples |
+|---|---|---|---|
+| 🌿 | **Worktrees** | extra copies of a repo agents create | `~/.codex/worktrees/*`, `.claude/worktrees/*`, `*-worktrees/*` |
+| 📦 | **Dependencies** | build and install folders, only next to their project file | `node_modules`, `target`, `.venv`, `.next`, `.turbo`, `.nuxt`, `.svelte-kit` |
+| 🧰 | **Package caches** | download caches, fetched again when needed | npm, pnpm, yarn, bun, pip, uv, poetry, cargo, go, Playwright |
+| 👻 | **Sessions** | agent conversation history, matched to its project | `~/.claude/projects/*`, `~/.codex/sessions/*`, `~/.grok/sessions/*` |
+| 🗄️ | **Agent caches** | files agents keep for themselves | `~/.cache/codex-runtimes`, `~/.claude/file-history` |
+| 📜 | **Logs** | agent logs and prompt history | `*.log`, `history.jsonl` |
+
+Agents it knows: **Claude Code, Codex, Cursor, Grok, Gemini CLI, OpenCode and Aider.**
+
+## 🛡️ What protects an item
+
+Before anything is marked, and again right before anything moves, huskmap asks:
+
+- 🔴 **Is someone in there?** Any process (agent, shell, editor, dev server) working inside the folder, read from `/proc`. Never removed, not even by force.
+- 🔴 **Is it the main checkout, or outside the scanned folders?** Never removed.
+- 🔴 **Does it hold secret files that exist only there?** A `.env` that is a copy of the main checkout's does not count; a unique one keeps the folder.
+- 🟠 **Uncommitted changes, or commits that exist on no other branch or remote?** Protected. You can still **mark anyway** (`X`), and the branch always stays in the repo.
+- 🟡 **A session whose project is gone?** Flagged, usually safe to remove.
+
+## 🔎 Filters
+
+Click the chips above the list, or type in the search box. Everything you type must match, and it works on the map too.
+
+```text
+kind:deps size:>500mb age:>30d          # big, old dependency folders
+is:uncommitted,unpushed                  # worktrees holding work
+agent:claude -is:blocked "fix/"          # Claude's leftovers you may remove
+tipo:sessoes status:orfao                # the same keys in Portuguese
 ```
-huskmap update --check     # say whether one exists
-huskmap update             # install it (asks first; -y to not)
-HUSKMAP_NO_UPDATE_CHECK=1  # never check
-```
 
-This is the only network huskmap does. Builds from `cargo` or a checkout are never overwritten.
+Keys: `kind`/`tipo`, `is`/`status`, `agent`/`agente`, `size`/`peso`, `age`/`idade`, `branch`, `path`/`caminho`, `eco`. A leading `-` excludes, commas mean "any of".
 
-## Commands
+## ⌨️ Keyboard
 
-```
-huskmap                  # desktop map on X11/Wayland; text scan otherwise
-huskmap gui
+| Key | Does |
+| --- | ---- |
+| `j` / `k` | next / previous item |
+| `enter` | open details |
+| `x` / `X` | mark / mark anyway |
+| `a` | move marked items to the trash |
+| `/` | search and filter |
+| `1` to `6` | show one type |
+| `tab` | map or list |
+| `s` | scan again |
+| `t` | theme: system, light or dark |
+| `u` | install an update |
+| `?` | the guide |
+
+## 🖥️ Command line
+
+```bash
+huskmap                         # the desktop map on X11/Wayland, a text scan otherwise
 huskmap scan [PATH]... [--json] [--min-size 500M] [--category worktree] [--all]
-huskmap doctor
+huskmap doctor                  # can huskmap scan this machine?
 huskmap plan [--preset safe|agent-only|older] [--only PATH]... [--force] [-o plan.json]
 huskmap apply --plan plan.json [--force]
-huskmap map              # TUI of the last report
+huskmap map                     # browse the last scan in the terminal
 huskmap update [--check]
 huskmap completions bash|zsh|fish
 ```
 
-Default is scan + plan. Nothing moves until you apply. Apply re-reads size, mtime, git state and processes first; anything that drifted is kept. Items go to the freedesktop trash; worktrees are then pruned from git. Only one apply runs at a time (`$XDG_STATE_HOME/huskmap/apply.lock`), and installers wait for it.
+Default is scan and plan: nothing moves until you apply. Apply re-reads size, mtime, git state and processes first, and anything that drifted is skipped. Only one removal runs at a time.
 
-Guarded worktrees (dirty, stranded, locked) can be force-marked from the drawer (`X`) or with `plan --only PATH --force`. Occupied worktrees, primary checkouts and unique secrets never go.
+## 🔄 Updates
 
-## Language
+Once a day the app asks GitHub Releases for a newer huskmap. When there is one, a chip shows up in the status bar (`u`): it downloads the update, checks the SHA256, installs it the way this copy was installed (a package through `pkexec`, or an in-place swap for the portable build) and reopens with your marks.
 
-English and Brazilian Portuguese. Order of precedence:
+```bash
+huskmap update --check          # is there one?
+huskmap update                  # install it (asks first, -y to not)
+HUSKMAP_NO_UPDATE_CHECK=1       # never check
+```
+
+## 🌍 Language
+
+English and Brazilian Portuguese, in this order:
 
 1. `--lang en|pt-br` or `HUSKMAP_LANG`
-2. the EN | PT switch in the desktop map, remembered in `$XDG_CONFIG_HOME/huskmap/settings.json`
-3. where the machine is: a Brazilian timezone (`TZ`, `/etc/localtime`, `/etc/timezone`) or a `*_BR` locale reads pt-BR; everywhere else, English
+2. your pick in the app, saved in `$XDG_CONFIG_HOME/huskmap/settings.json`
+3. your machine: a Brazilian timezone or a `*_BR` locale reads Portuguese, anything else English
 
-No network lookup for this; the machine's own settings decide.
+No network lookup: the machine's own settings decide.
 
-## Desktop
+## 🛠️ Build from source
 
-A native Freya (Skia) window. The first launch opens **How it works** (`?` any time): what huskmap is for, the four steps, how to read the map, the six types, what protects an item, every filter and every key.
-
-Keyboard first: `j/k` move, `enter` open, `x` mark, `X` mark anyway, `a` move to trash, `/` search and filter, `tab` map/list, `1`-`6` one type, `s` scan, `u` update, `?` guide. Right-click a dot on the map to mark it; click an agent in the rail to filter by it. The drawer opens folders (`xdg-open`) and copies paths.
-
-The list has filter chips (type, status, agent, size, unchanged for), sortable columns and **Mark N removable**, which marks everything visible that may go. The chips write into the search box, and you can type the same filters by hand; they apply to the map too:
-
-```
-kind:deps size:>500mb age:>30d          # big, old dependency folders
-is:uncommitted,unpushed                  # worktrees holding work
-agent:claude -is:blocked "fix/"          # Claude's, not blocked, branch or path with fix/
-tipo:sessoes status:orfao                # the same keys in Portuguese
-```
-
-Keys: `kind`/`tipo`, `is`/`status`, `agent`/`agente`, `size`/`peso`, `age`/`idade`, `branch`, `path`/`caminho`, `eco`. A leading `-` excludes; commas mean "any of".
-
-Marks are remembered in `$XDG_STATE_HOME/huskmap/session.json` and come back on the next launch, re-checked against the fresh scan.
-
-```
+```bash
 cargo run -p huskmap-cli            # opens the map when a display exists
-cargo run -p huskmap-cli -- gui
-```
-
-Freya/Skia links against `libfreetype`, `fontconfig`, `EGL` and `GL`. If the distro has no unversioned `.so` stubs, keep them in `./link-libs` (gitignored); `.cargo/config.toml` points the linker there.
-
-## Build
-
-```
 cargo test --workspace --all-features
-bash scripts/install.test.sh               # installer flow, in a throwaway HOME
-bash scripts/package.test.sh target/release/huskmap amd64
-bash scripts/release-tools.test.sh
 cargo clippy --workspace --all-targets --all-features -- -D warnings
-cargo cov                            # coverage on huskmap-core (cargo-llvm-cov)
+cargo cov                           # coverage on huskmap-core (cargo-llvm-cov)
+bash scripts/install.test.sh        # installer flow, in a throwaway HOME
 ```
 
-State lives in `$XDG_STATE_HOME/huskmap/`. Core owns the rules; the CLI and the map are views.
+Freya and Skia link against `libfreetype`, `fontconfig`, `EGL`, `GL` and `GLESv2` (`libgles-dev` on Debian and Ubuntu). If your distro has no unversioned `.so` stubs, put them in `./link-libs` (ignored by git); `.cargo/config.toml` points the linker there.
 
-## Release
+```
+huskmap-core   scan, classify, size, risk, plan, apply   (no UI dependencies)
+huskmap-cli    clap commands, ratatui map, JSON
+huskmap-gui    Freya desktop app, talks only to core
+site/          the website (Astro, static)
+```
+
+## 📦 Releasing
 
 1. Bump `version` in `Cargo.toml` and add a `## <version>` section to `CHANGELOG.md`.
-2. Tag `v<version>` and push. `.github/workflows/release.yml` checks the three agree, builds x86_64 and aarch64, packages every family, writes `SHA256SUMS`, attests provenance and publishes with the changelog section as notes.
+2. Tag `v<version>` and push. The release workflow checks they agree, builds x86_64 and ARM64, packages every family, writes `SHA256SUMS`, attests provenance, publishes with the changelog as notes and rebuilds the website.
+
+## 🤝 Contributing
+
+Issues and pull requests are welcome. Read [`AGENTS.md`](AGENTS.md) first: it holds the rules this project lives by (Linux only, safety first, plain words, tests in the same change).
+
+## 📄 License
+
+[MIT](LICENSE). Agent and tool logos belong to their owners and only identify what huskmap finds.
