@@ -3,7 +3,7 @@
 use freya::prelude::*;
 use huskmap_core::{Locale, copy};
 
-use crate::components::ui::{glyph, keycap, keycap_on, mono};
+use crate::components::ui::{glyph, mono};
 use crate::icons::Glyph;
 use crate::theme;
 use crate::view_model::{AppState, Intent, ViewMode};
@@ -131,7 +131,7 @@ impl Component for TopBar {
                     .child(query.max_lines(1).text_overflow(TextOverflow::Ellipsis)),
             )
             .child(if search.is_empty() {
-                keycap("/").into_element()
+                rect().into_element()
             } else {
                 mono(found.to_string(), theme::TEXT_XS, theme::ash()).into_element()
             });
@@ -186,15 +186,7 @@ impl Component for TopBar {
                     },
                 )
                 .font_weight(FontWeight::SEMI_BOLD),
-            )
-            .child(keycap_on(
-                "s",
-                if scanning {
-                    theme::amber()
-                } else {
-                    theme::pitch()
-                },
-            ));
+            );
 
         let mut state_help = self.state;
         let mut hover_help = use_state(|| false);
@@ -221,18 +213,9 @@ impl Component for TopBar {
                 } else {
                     theme::ash()
                 },
-                15.,
+                18.,
             ))
-            .child(mono(
-                d.guide_open,
-                theme::TEXT_SM,
-                if help_lit {
-                    theme::bone()
-                } else {
-                    theme::ash()
-                },
-            ))
-            .child(keycap("?"));
+            .a11y_alt(d.guide_open.to_string());
 
         rect()
             .content(Content::flex())
@@ -254,13 +237,6 @@ impl Component for TopBar {
                     .child(scan),
             )
     }
-}
-
-/// `"j/k move  x mark"` → `[("j/k", "move"), ("x", "mark")]`.
-pub fn keyhints(line: &str) -> Vec<(&str, &str)> {
-    line.split("  ")
-        .filter_map(|pair| pair.trim().split_once(' '))
-        .collect()
 }
 
 #[derive(PartialEq)]
@@ -313,7 +289,6 @@ impl Component for StatusBar {
                     theme::TEXT_XS,
                     theme::copper(),
                 ))
-                .child(keycap_on("u", theme::copper()))
                 .into_element(),
             None => rect().into_element(),
         };
@@ -377,21 +352,6 @@ impl Component for StatusBar {
                 Glyph::Moon,
                 d.theme_dark,
             ));
-        let mut keys = rect()
-            .horizontal()
-            .spacing(14.)
-            .cross_align(Alignment::Center);
-        for (k, label) in keyhints(d.keyhint) {
-            keys = keys.child(
-                rect()
-                    .content(Content::flex())
-                    .horizontal()
-                    .spacing(5.)
-                    .cross_align(Alignment::Center)
-                    .child(keycap(k))
-                    .child(mono(label.to_lowercase(), theme::TEXT_XS, theme::dust())),
-            );
-        }
         rect()
             .content(Content::flex())
             .width(Size::fill())
@@ -434,7 +394,6 @@ impl Component for StatusBar {
                     .spacing(22.)
                     .cross_align(Alignment::Center)
                     .child(update_chip)
-                    .child(keys)
                     .child(themes)
                     .child(
                         rect()
