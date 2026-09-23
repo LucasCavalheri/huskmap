@@ -12,6 +12,12 @@ const brands = import.meta.glob("../../../huskmap-gui/assets/brands/*.svg", {
   eager: true,
 }) as Record<string, string>;
 
+const distros = import.meta.glob("../assets/distros/*.svg", {
+  query: "?raw",
+  import: "default",
+  eager: true,
+}) as Record<string, string>;
+
 function find(table: Record<string, string>, name: string): string {
   const hit = Object.entries(table).find(([path]) => path.endsWith(`/${name}.svg`));
   if (!hit) throw new Error(`icon not found: ${name}`);
@@ -31,6 +37,7 @@ function prepare(svg: string, label?: string): string {
 
 export const glyph = (name: string) => prepare(find(glyphs, name));
 export const brand = (name: string, label: string) => prepare(find(brands, name), label);
+export const distro = (name: string) => prepare(find(distros, name));
 
 /** Agents huskmap knows, with the mark that identifies each one. */
 export const AGENTS = [
