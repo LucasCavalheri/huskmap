@@ -2,6 +2,7 @@
 import "../styles/global.css";
 import Icon from "./Icon.astro";
 import Downloads from "./Downloads.astro";
+import Flag from "./Flag.astro";
 import { AGENTS } from "../lib/icons";
 import { dictionaries, localePath, otherLocale, type Locale } from "../i18n";
 
@@ -99,7 +100,25 @@ const jsonLd = {
         </a>
         <nav class="links" aria-label={t.nav.label}>
           <a href={REPO}>{t.nav.github}</a>
-          <a href={localePath(otherLocale(locale))} hreflang={other.htmlLang} aria-label={`${other.short} · ${t.nav.other}`}>{other.short}</a>
+          <span class="langs" role="group" aria-label={t.nav.language}>
+            {(["en", "pt-BR"] as const).map((l) => {
+              const here = l === locale;
+              const dict = dictionaries[l];
+              return (
+                <a
+                  href={localePath(l)}
+                  hreflang={dict.htmlLang}
+                  lang={dict.htmlLang}
+                  class:list={["lang", { here }]}
+                  aria-current={here ? "page" : undefined}
+                  aria-label={`${dict.short} · ${dict.label}`}
+                >
+                  <Flag country={l === "en" ? "us" : "br"} />
+                  <span>{dict.short}</span>
+                </a>
+              );
+            })}
+          </span>
           <a class="btn" href="#install">{t.nav.install}</a>
         </nav>
       </div>

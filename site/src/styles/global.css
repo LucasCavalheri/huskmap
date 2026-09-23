@@ -162,8 +162,44 @@ img {
   font-size: 14.5px;
   color: var(--soft);
 }
-.links a:not(.btn):hover {
+.links > a:not(.btn):hover {
   color: var(--ink);
+}
+.langs {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--raised);
+}
+.lang {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 10px 5px 7px;
+  border-radius: 999px;
+  font: 400 12.5px/1 var(--mono);
+  color: var(--faint);
+  transition: background 0.25s, color 0.25s;
+}
+.lang .flag {
+  filter: saturate(0.35);
+  opacity: 0.75;
+  transition: filter 0.3s, opacity 0.3s;
+}
+.lang:hover {
+  color: var(--ink);
+}
+.lang:hover .flag,
+.lang.here .flag {
+  filter: none;
+  opacity: 1;
+}
+.lang.here {
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: 0 1px 3px rgba(40, 30, 20, 0.12);
 }
 .btn {
   padding: 8px 16px;

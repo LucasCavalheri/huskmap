@@ -20,6 +20,7 @@ export const en = {
   nav: {
     label: "Main navigation",
     home: "huskmap home",
+    language: "Language",
     install: "Install",
     github: "GitHub",
     other: "Ver em português",
