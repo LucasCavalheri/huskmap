@@ -1,8 +1,10 @@
 # huskmap
 
-The grove remembers what the agents left.
+Your agents left things behind. Here is what they weigh.
 
-huskmap is a Linux desktop + CLI map of the afterlife of agentic work: Claude Code, Codex, Cursor, OpenCode, Aider, Gemini CLI, Grok and kin. It is not a generic disk tool. It reads agent homes, session stores, package caches and git worktree topology, and it knows who is still working where.
+**Website:** [huskmap.lucascavalheri.com.br](https://huskmap.lucascavalheri.com.br) · source in [`site/`](site/)
+
+huskmap is a Linux desktop + CLI map of what AI coding agents leave on your disk: Claude Code, Codex, Cursor, OpenCode, Aider, Gemini CLI, Grok and kin. It is not a generic disk tool. It reads agent homes, session stores, package caches and git worktree topology, and it knows who is still working where.
 
 Linux only, every Linux: any distro, glibc or musl, X11 or Wayland. Paths follow the XDG base directory spec.
 
@@ -11,10 +13,10 @@ Linux only, every Linux: any distro, glibc or musl, X11 or Wayland. Paths follow
 | Kind | What | Examples |
 | ---- | ---- | -------- |
 | Worktrees | linked git worktrees and agent slots | `*-worktrees/*`, `proj/.claude/worktrees/*`, `~/.codex/worktrees/*/*`, `~/.cursor/worktrees/*/*` |
-| Ballast | build and dependency dirs, only with a marker | `node_modules` + `package.json`, `target` + `Cargo.toml`, `.venv` + `pyvenv.cfg`, `.next`, `.turbo`, `.nuxt`, `.svelte-kit`, `.pytest_cache`, `.tox` |
-| Toolchains | package-manager caches | npm, pnpm, yarn, bun, pip, uv, poetry, cargo, go build, playwright |
-| Afterimages | agent session stores | `~/.claude/projects/*`, `~/.codex/sessions/Y/M/D`, `~/.grok/sessions/*` |
-| Caches, Debris | agent caches, logs, prompt history | `~/.claude/debug`, `~/.codex/cache`, `*.log` |
+| Dependencies | build and dependency dirs, only with a marker | `node_modules` + `package.json`, `target` + `Cargo.toml`, `.venv` + `pyvenv.cfg`, `.next`, `.turbo`, `.nuxt`, `.svelte-kit`, `.pytest_cache`, `.tox` |
+| Package caches | package-manager caches | npm, pnpm, yarn, bun, pip, uv, poetry, cargo, go build, playwright |
+| Sessions | agent session stores | `~/.claude/projects/*`, `~/.codex/sessions/Y/M/D`, `~/.grok/sessions/*` |
+| Agent caches, Logs | agent caches, logs, prompt history | `~/.claude/debug`, `~/.codex/cache`, `*.log` |
 
 ## Worktrees are guarded
 
@@ -36,7 +38,7 @@ curl -fsSL https://raw.githubusercontent.com/LucasCavalheri/huskmap/main/install
 
 The script reads `uname` and the package manager, downloads the matching release asset, checks it against the release's `SHA256SUMS`, and installs it. `--user` installs the portable build into `~/.local` without root; `--print-plan` shows what it would fetch.
 
-If huskmap is open it says what is in flight before touching anything: a running apply is waited for and never interrupted, a scan (read-only) simply stops, and marked husks are kept. The window closes, updates, and reopens with its marks.
+If huskmap is open it says what is in flight before touching anything: a running apply is waited for and never interrupted, a scan (read-only) simply stops, and marked items are kept. The window closes, updates, and reopens with its marks.
 
 | File | Family |
 | ---- | ------ |
@@ -74,7 +76,7 @@ huskmap update [--check]
 huskmap completions bash|zsh|fish
 ```
 
-Default is scan + plan. Nothing moves until you apply. Apply re-reads size, mtime, git state and processes first; anything that drifted is kept. Husks go to the freedesktop trash; worktrees are then pruned from git. Only one apply runs at a time (`$XDG_STATE_HOME/huskmap/apply.lock`), and installers wait for it.
+Default is scan + plan. Nothing moves until you apply. Apply re-reads size, mtime, git state and processes first; anything that drifted is kept. Items go to the freedesktop trash; worktrees are then pruned from git. Only one apply runs at a time (`$XDG_STATE_HOME/huskmap/apply.lock`), and installers wait for it.
 
 Guarded worktrees (dirty, stranded, locked) can be force-marked from the drawer (`X`) or with `plan --only PATH --force`. Occupied worktrees, primary checkouts and unique secrets never go.
 
