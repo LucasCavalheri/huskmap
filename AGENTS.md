@@ -131,7 +131,7 @@ Freya rules:
 
 - Use Freya built-ins first (`Button`, `Slider`, `Switch`, `VirtualScrollView`, `ScrollView`, layout `rect`s).
 - Build a huskmap design system in `huskmap-gui/src/theme.rs` + `components/`. No one-off colors in screens.
-- One theme: **Afterlife** — near-black carbon, bone/ash text, oxidized copper accents, warning amber, danger oxblood. No purple SaaS, no default blue, no white dashboard.
+- Two palettes, one set of token names in `theme.rs`: **Afterlife** (dark: near-black carbon, bone/ash text, oxidized copper, warning amber, danger oxblood) and **Daylight** (light: warm paper and ink, never pure white, darker accents that keep contrast). The person picks System, Light or Dark (`t`, status bar); System follows the desktop. Screens call `theme::copper()` and friends, never a raw color. No purple SaaS, no default blue, no white dashboard.
 - Typography: one display face for titles (tight, slightly strange), one mono face for paths and bytes. Numbers are tabular.
 - Motion is required: scan pulse, map reveal, reclaim count-up, row hover, panel slide. Short, physical, no bounce spam.
 - The **Husk Map** is the home screen, not a list dumped on boot. List/table is a drill-in.
@@ -153,7 +153,7 @@ Do not ship:
 - Unstyled Freya defaults as the product look
 - Rainbow charts
 - Emoji soup in the chrome
-- Light theme in v1 (token the theme anyway so it can exist later)
+- A color that only works in one palette. Check new frames in both (`11-*-light` snapshots).
 
 ## CLI
 

@@ -14,6 +14,7 @@ First release. Linux only, every Linux.
 - **Marks survive** restarts and updates (`$XDG_STATE_HOME/huskmap/session.json`).
 - **Updates**: a daily check against GitHub Releases, SHA256-verified, installed the way huskmap was installed (deb, rpm, pacman, apk, portable). `huskmap update`, or `HUSKMAP_NO_UPDATE_CHECK=1`.
 - **Install anywhere**: `.deb`, `.rpm`, `.pkg.tar.zst`, `.apk`, portable `tar.gz`, and `install.sh`, which waits for a running apply and reopens the map with its marks.
+- **Light and dark themes**: Daylight and Afterlife, or follow the desktop. Switch with `t` or from the status bar.
 - **How it works**: an in-app guide that opens on first launch and on `?`.
 - **Filters**: chips and a typed query language (`kind:deps size:>500mb age:>30d -is:blocked`), in English or Portuguese, shared by the map and the list. Sortable list columns and "Mark N removable".
 - **English and Brazilian Portuguese**, in plain words, chosen by flag, saved pick, then timezone/locale (Brazil reads pt-BR).
