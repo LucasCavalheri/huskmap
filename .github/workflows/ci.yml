@@ -128,10 +128,32 @@ jobs:
         with:
           fail-on-severity: low
 
+  site:
+    name: site
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22.12.0
+          cache: npm
+          cache-dependency-path: site/package-lock.json
+      - name: Install site dependencies
+        run: npm ci
+        working-directory: site
+      - name: Copy rules and screenshots
+        run: npm test
+        working-directory: site
+      - name: Type-check and build the landing page
+        run: npm run build
+        working-directory: site
+
   CI:
     name: CI
     if: ${{ always() }}
-    needs: [quality, test, coverage, security]
+    needs: [quality, test, coverage, security, site]
     runs-on: ubuntu-24.04
     steps:
       - name: Every required job passed
