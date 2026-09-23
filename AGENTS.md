@@ -123,7 +123,7 @@ Rules:
 
 ## GUI — beauty is a functional requirement
 
-The desktop app must be **absurdly beautiful**. Not “clean”. Not “fine for a utility”. It should look like a title sequence: dark grove, insect husks, sonar over a disk.
+The desktop app must be **beautiful, modern, delicate and minimal**. Not “fine for a utility”, and not busy either: few elements, lots of air, every element earns its place. The sonar map is the one dramatic piece; everything around it stays quiet.
 
 This is a merge-blocking rule. A feature that works but looks like a settings panel is incomplete.
 
@@ -136,7 +136,7 @@ Freya rules:
 - Motion is required: scan pulse, map reveal, reclaim count-up, row hover, panel slide. Short, physical, no bounce spam.
 - The **Husk Map** is the home screen, not a list dumped on boot. List/table is a drill-in.
 - Empty states and errors are illustrated, copy is dry and sharp. No “Oops!”.
-- Density of a pro tool (DaisyDisk / ncdu energy) with the drama of a creature that eats leftovers.
+- Calm by default: show what matters, keep the rest one click away (extra filters behind "More filters", keys and explanations in the guide). No keycaps or hint rows in the chrome, no labels that repeat what a color already says.
 - 60fps on a normal laptop during scan visualization. Virtualize long lists.
 - Keyboard-first: `j/k`, `/` search, `enter` inspect, `x` mark, `a` apply-with-confirm.
 
