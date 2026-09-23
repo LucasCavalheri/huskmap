@@ -34,18 +34,20 @@ impl Component for Drawer {
         let id: HuskId = v.id.clone();
 
         let mark_mark: SvgViewer = match (self.brand, v.agent) {
-            (_, Some(agent)) => agent_mark(Some(agent), theme::BONE, 20.),
-            (Some(b), None) => crate::components::ui::brand(b, theme::BONE, 20.),
-            (None, None) => glyph(Glyph::for_kind(v.kind), theme::BONE, 20.),
+            (_, Some(agent)) => agent_mark(Some(agent), theme::bone(), 20.),
+            (Some(b), None) => crate::components::ui::brand(b, theme::bone(), 20.),
+            (None, None) => glyph(Glyph::for_kind(v.kind), theme::bone(), 20.),
         };
 
         let mut wards = rect().width(Size::fill()).spacing(10.);
         for (ward, text) in &v.wards {
             let c = match ward {
-                huskmap_core::Ward::Orphaned { .. } | huskmap_core::Ward::Warm { .. } => theme::ASH,
-                w if w.absolute() => theme::OXBLOOD,
-                w if w.blocks() => theme::AMBER,
-                _ => theme::COPPER,
+                huskmap_core::Ward::Orphaned { .. } | huskmap_core::Ward::Warm { .. } => {
+                    theme::ash()
+                }
+                w if w.absolute() => theme::oxblood(),
+                w if w.blocks() => theme::amber(),
+                _ => theme::copper(),
             };
             wards = wards.child(
                 rect()
@@ -58,7 +60,7 @@ impl Component for Drawer {
                         mono(
                             text.clone(),
                             theme::TEXT_MD,
-                            theme::mix(c, theme::BONE, 0.35),
+                            theme::mix(c, theme::bone(), 0.35),
                         )
                         .max_lines(2),
                     ),
@@ -73,12 +75,12 @@ impl Component for Drawer {
                     .horizontal()
                     .width(Size::fill())
                     .spacing(12.)
-                    .child(rect().width(Size::px(84.)).child(caps(k, theme::DUST)))
+                    .child(rect().width(Size::px(84.)).child(caps(k, theme::dust())))
                     .child(
                         rect()
                             .content(Content::flex())
                             .width(Size::flex(1.))
-                            .child(mono(val.clone(), theme::TEXT_SM, theme::BONE).max_lines(2)),
+                            .child(mono(val.clone(), theme::TEXT_SM, theme::bone()).max_lines(2)),
                     ),
             );
         }
@@ -90,10 +92,10 @@ impl Component for Drawer {
             .cross_align(Alignment::Center)
             .padding((9., 12.))
             .corner_radius(theme::RADIUS)
-            .background(theme::mix(theme::CARBON, tone, 0.1))
+            .background(theme::mix(theme::carbon(), tone, 0.1))
             .border(
                 Border::new()
-                    .fill(theme::mix(theme::CARBON, tone, 0.6))
+                    .fill(theme::mix(theme::carbon(), tone, 0.6))
                     .width(1.)
                     .alignment(BorderAlignment::Inner),
             )
@@ -109,7 +111,7 @@ impl Component for Drawer {
                 mono(
                     v.verdict.clone(),
                     theme::TEXT_SM,
-                    theme::mix(tone, theme::BONE, 0.4),
+                    theme::mix(tone, theme::bone(), 0.4),
                 )
                 .font_weight(FontWeight::MEDIUM),
             );
@@ -133,15 +135,19 @@ impl Component for Drawer {
             Mode::Locked => false,
         };
         let (fill, ink, edge) = match (&mode, on) {
-            (Mode::Locked, _) => (theme::CARBON_RAISED, theme::DUST, theme::CARBON_RAISED),
-            (Mode::Mark, false) => (theme::COPPER, theme::PITCH, theme::COPPER),
-            (Mode::Mark, true) => (theme::CARBON_HOVER, theme::COPPER, theme::COPPER),
-            (Mode::Force, false) => (
-                theme::CARBON_RAISED,
-                theme::mix(theme::OXBLOOD, theme::BONE, 0.3),
-                theme::OXBLOOD,
+            (Mode::Locked, _) => (
+                theme::carbon_raised(),
+                theme::dust(),
+                theme::carbon_raised(),
             ),
-            (Mode::Force, true) => (theme::OXBLOOD_DEEP, theme::BONE, theme::OXBLOOD),
+            (Mode::Mark, false) => (theme::copper(), theme::pitch(), theme::copper()),
+            (Mode::Mark, true) => (theme::carbon_hover(), theme::copper(), theme::copper()),
+            (Mode::Force, false) => (
+                theme::carbon_raised(),
+                theme::mix(theme::oxblood(), theme::bone(), 0.3),
+                theme::oxblood(),
+            ),
+            (Mode::Force, true) => (theme::oxblood_deep(), theme::bone(), theme::oxblood()),
         };
         let label = match (&mode, on) {
             (Mode::Force, false) => d.force_mark,
@@ -194,12 +200,12 @@ impl Component for Drawer {
                 .corner_radius(theme::RADIUS)
                 .border(
                     Border::new()
-                        .fill(theme::HAIRLINE)
+                        .fill(theme::hairline())
                         .width(1.)
                         .alignment(BorderAlignment::Inner),
                 )
-                .child(glyph(g, theme::ASH, 14.))
-                .child(mono(text.to_string(), theme::TEXT_SM, theme::BONE))
+                .child(glyph(g, theme::ash(), 14.))
+                .child(mono(text.to_string(), theme::TEXT_SM, theme::bone()))
         };
         let path_open = v.full_path.clone();
         let path_copy = v.full_path.clone();
@@ -233,11 +239,11 @@ impl Component for Drawer {
                     .width(Size::fill())
                     .cross_align(Alignment::Center)
                     .spacing(9.)
-                    .child(glyph(Glyph::for_kind(v.kind), theme::COPPER, 14.))
+                    .child(glyph(Glyph::for_kind(v.kind), theme::copper(), 14.))
                     .child(
                         rect()
                             .width(Size::flex(1.))
-                            .child(caps(&v.kind_label, theme::COPPER)),
+                            .child(caps(&v.kind_label, theme::copper())),
                     )
                     .child(
                         rect()
@@ -245,7 +251,7 @@ impl Component for Drawer {
                             .padding(4.)
                             .corner_radius(theme::RADIUS)
                             .on_press(move |_| state_close.write().drawer_open = false)
-                            .child(glyph(Glyph::Close, theme::ASH, 16.)),
+                            .child(glyph(Glyph::Close, theme::ash(), 16.)),
                     ),
             )
             .child(
@@ -260,11 +266,14 @@ impl Component for Drawer {
                             .spacing(12.)
                             .cross_align(Alignment::Center)
                             .child(mark_mark)
-                            .child(rect().width(Size::flex(1.)).child(
-                                display(v.title.clone(), theme::TITLE_SM, theme::BONE).max_lines(2),
-                            )),
+                            .child(
+                                rect().width(Size::flex(1.)).child(
+                                    display(v.title.clone(), theme::TITLE_SM, theme::bone())
+                                        .max_lines(2),
+                                ),
+                            ),
                     )
-                    .child(mono(v.path.clone(), theme::TEXT_SM, theme::ASH).max_lines(3)),
+                    .child(mono(v.path.clone(), theme::TEXT_SM, theme::ash()).max_lines(3)),
             )
             .child(
                 rect()
@@ -272,14 +281,18 @@ impl Component for Drawer {
                     .horizontal()
                     .cross_align(Alignment::End)
                     .spacing(14.)
-                    .child(display(v.size_label.clone(), theme::TITLE_LG, theme::BONE))
+                    .child(display(
+                        v.size_label.clone(),
+                        theme::TITLE_LG,
+                        theme::bone(),
+                    ))
                     .child(
                         rect()
                             .content(Content::flex())
                             .padding((0., 0., 10., 0.))
                             .spacing(3.)
-                            .child(caps(d.detail_age, theme::DUST))
-                            .child(mono(v.age_label.clone(), theme::TEXT_SM, theme::ASH)),
+                            .child(caps(d.detail_age, theme::dust()))
+                            .child(mono(v.age_label.clone(), theme::TEXT_SM, theme::ash())),
                     ),
             )
             .child(verdict);
@@ -289,7 +302,7 @@ impl Component for Drawer {
                     .content(Content::flex())
                     .width(Size::fill())
                     .spacing(12.)
-                    .child(caps(d.detail_wards, theme::DUST))
+                    .child(caps(d.detail_wards, theme::dust()))
                     .child(wards),
             );
         }
@@ -297,7 +310,8 @@ impl Component for Drawer {
             body = body.child(hairline()).child(facts);
         }
         if !v.notes.is_empty() {
-            body = body.child(mono(v.notes.join(" · "), theme::TEXT_XS, theme::DUST).max_lines(3));
+            body =
+                body.child(mono(v.notes.join(" · "), theme::TEXT_XS, theme::dust()).max_lines(3));
         }
 
         rect()
@@ -306,11 +320,11 @@ impl Component for Drawer {
             .height(Size::fill())
             .offset_x(t * theme::DRAWER_WIDTH)
             .opacity(1.0 - t * 0.6)
-            .background(theme::CARBON)
-            .shadow((-24.0, 0.0, 48.0, 0.0, (0u8, 0u8, 0u8, 180u8)))
+            .background(theme::carbon())
+            .shadow((-24.0, 0.0, 48.0, 0.0, theme::shadow(0.9)))
             .border(
                 Border::new()
-                    .fill(theme::HAIRLINE)
+                    .fill(theme::hairline())
                     .width(1.)
                     .alignment(BorderAlignment::Inner),
             )
@@ -329,7 +343,8 @@ impl Component for Drawer {
                     .spacing(10.)
                     .child(tools);
                 if forcing {
-                    foot = foot.child(mono(d.force_hint, theme::TEXT_XS, theme::DUST).max_lines(2));
+                    foot =
+                        foot.child(mono(d.force_hint, theme::TEXT_XS, theme::dust()).max_lines(2));
                 }
                 foot.child(action)
             })

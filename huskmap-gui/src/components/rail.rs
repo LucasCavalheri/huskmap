@@ -40,7 +40,7 @@ impl Component for CountUp {
             .horizontal()
             .cross_align(Alignment::End)
             .spacing(10.)
-            .child(display(num.to_string(), 76., theme::BONE))
+            .child(display(num.to_string(), 76., theme::bone()))
             .child(
                 rect()
                     .content(Content::flex())
@@ -48,7 +48,7 @@ impl Component for CountUp {
                     .child(display_italic(
                         unit.to_string(),
                         theme::TITLE_MD,
-                        theme::COPPER,
+                        theme::copper(),
                     )),
             )
     }
@@ -97,14 +97,14 @@ impl Component for AlarmCard {
             .spacing(5.)
             .corner_radius(theme::RADIUS)
             .background(if lit {
-                theme::CARBON_HOVER
+                theme::carbon_hover()
             } else {
-                theme::CARBON_RAISED
+                theme::carbon_raised()
             })
             .border(
                 Border::new()
                     .fill(theme::mix(
-                        theme::CARBON_RAISED,
+                        theme::carbon_raised(),
                         tone,
                         if lit { 0.7 } else { 0.35 },
                     ))
@@ -125,24 +125,24 @@ impl Component for AlarmCard {
                     .width(Size::fill())
                     .spacing(9.)
                     .cross_align(Alignment::Center)
-                    .child(agent_mark(self.row.agent, theme::BONE, 14.))
+                    .child(agent_mark(self.row.agent, theme::bone(), 14.))
                     .child(
-                        mono(self.row.title.clone(), theme::TEXT_MD, theme::BONE)
+                        mono(self.row.title.clone(), theme::TEXT_MD, theme::bone())
                             .font_weight(FontWeight::MEDIUM)
                             .max_lines(1)
                             .text_overflow(TextOverflow::Ellipsis),
                     ),
             )
             .child(
-                mono(self.row.path.clone(), theme::TEXT_XS, theme::DUST)
+                mono(self.row.path.clone(), theme::TEXT_XS, theme::dust())
                     .max_lines(1)
                     .text_overflow(TextOverflow::Ellipsis),
             );
         for (ward, text) in &self.row.lines {
             let c = match ward {
-                huskmap_core::Ward::Occupied { .. } => theme::OXBLOOD,
-                huskmap_core::Ward::Dirty { .. } => theme::AMBER,
-                _ => theme::COPPER,
+                huskmap_core::Ward::Occupied { .. } => theme::oxblood(),
+                huskmap_core::Ward::Dirty { .. } => theme::amber(),
+                _ => theme::copper(),
             };
             card = card.child(
                 rect()
@@ -155,7 +155,7 @@ impl Component for AlarmCard {
                         mono(
                             text.clone(),
                             theme::TEXT_SM,
-                            theme::mix(c, theme::BONE, 0.35),
+                            theme::mix(c, theme::bone(), 0.35),
                         )
                         .max_lines(1)
                         .text_overflow(TextOverflow::Ellipsis),
@@ -183,14 +183,18 @@ impl Component for LegendItem {
         let mut state = self.state;
         let kind: HuskKind = self.row.kind;
         let row = &self.row;
-        let text = if row.active { theme::BONE } else { theme::DUST };
+        let text = if row.active {
+            theme::bone()
+        } else {
+            theme::dust()
+        };
         rect()
             .content(Content::flex())
             .width(Size::fill())
             .padding((5., 10.))
             .corner_radius(theme::RADIUS)
             .background(if *hovered.read() {
-                Color::from(theme::CARBON_HOVER)
+                Color::from(theme::carbon_hover())
             } else {
                 Color::TRANSPARENT
             })
@@ -208,9 +212,9 @@ impl Component for LegendItem {
                     .child(glyph(
                         Glyph::for_kind(kind),
                         if row.active {
-                            theme::COPPER
+                            theme::copper()
                         } else {
-                            theme::DUST
+                            theme::dust()
                         },
                         15.,
                     ))
@@ -220,7 +224,7 @@ impl Component for LegendItem {
                             .width(Size::flex(1.))
                             .child(mono(row.label.clone(), theme::TEXT_MD, text)),
                     )
-                    .child(mono(row.count.to_string(), theme::TEXT_XS, theme::DUST))
+                    .child(mono(row.count.to_string(), theme::TEXT_XS, theme::dust()))
                     .child(
                         rect()
                             .content(Content::flex())
@@ -229,7 +233,11 @@ impl Component for LegendItem {
                             .child(mono(
                                 row.bytes_label.clone(),
                                 theme::TEXT_MD,
-                                if row.active { theme::ASH } else { theme::DUST },
+                                if row.active {
+                                    theme::ash()
+                                } else {
+                                    theme::dust()
+                                },
                             )),
                     )
                     .child(keycap(&(self.index + 1).to_string())),
@@ -239,7 +247,7 @@ impl Component for LegendItem {
                     .content(Content::flex())
                     .width(Size::fill())
                     .height(Size::px(2.))
-                    .background(theme::HAIRLINE_SOFT)
+                    .background(theme::hairline_soft())
                     .child(
                         rect()
                             .content(Content::flex())
@@ -251,7 +259,7 @@ impl Component for LegendItem {
                             .height(Size::fill())
                             .background(theme::mix(
                                 theme::kind_color(kind),
-                                theme::PITCH,
+                                theme::pitch(),
                                 if row.active { 0.15 } else { 0.7 },
                             )),
                     ),
@@ -279,8 +287,8 @@ fn agents_row(agents: &[(AgentKind, usize, u64)], state: State<AppState>) -> Rec
                 .spacing(6.)
                 .cross_align(Alignment::Center)
                 .on_press(move |_| state.write().press_chip(Chip::Agent(agent_kind)))
-                .child(agent_mark(Some(*agent), theme::ASH, 15.))
-                .child(mono(count.to_string(), theme::TEXT_SM, theme::DUST)),
+                .child(agent_mark(Some(*agent), theme::ash(), 15.))
+                .child(mono(count.to_string(), theme::TEXT_SM, theme::dust())),
         );
     }
     row
@@ -307,8 +315,8 @@ impl Component for Rail {
                     .horizontal()
                     .spacing(8.)
                     .cross_align(Alignment::Center)
-                    .child(glyph(Glyph::Mark, theme::VERDIGRIS, 13.))
-                    .child(mono(d.alarms_none, theme::TEXT_SM, theme::ASH).max_lines(2)),
+                    .child(glyph(Glyph::Mark, theme::verdigris(), 13.))
+                    .child(mono(d.alarms_none, theme::TEXT_SM, theme::ash()).max_lines(2)),
             );
         } else {
             for row in alarms.iter().take(3) {
@@ -322,7 +330,7 @@ impl Component for Rail {
                 alarm_list = alarm_list.child(mono(
                     format!("+{}", alarms.len() - 3),
                     theme::TEXT_SM,
-                    theme::DUST,
+                    theme::dust(),
                 ));
             }
         }
@@ -344,9 +352,9 @@ impl Component for Rail {
             .padding((14., 16.))
             .corner_radius(theme::RADIUS)
             .background(if send_ready {
-                theme::COPPER
+                theme::copper()
             } else {
-                theme::CARBON_RAISED
+                theme::carbon_raised()
             })
             .horizontal()
             .cross_align(Alignment::Center)
@@ -355,9 +363,9 @@ impl Component for Rail {
             .child(glyph(
                 Glyph::Trash,
                 if send_ready {
-                    theme::PITCH
+                    theme::pitch()
                 } else {
-                    theme::DUST
+                    theme::dust()
                 },
                 16.,
             ))
@@ -367,9 +375,9 @@ impl Component for Rail {
                         d.apply_open,
                         theme::TEXT_MD,
                         if send_ready {
-                            theme::PITCH
+                            theme::pitch()
                         } else {
-                            theme::DUST
+                            theme::dust()
                         },
                     )
                     .font_weight(FontWeight::SEMI_BOLD),
@@ -383,17 +391,17 @@ impl Component for Rail {
                 },
                 theme::TEXT_SM,
                 if send_ready {
-                    theme::PITCH
+                    theme::pitch()
                 } else {
-                    theme::DUST
+                    theme::dust()
                 },
             ))
             .child(keycap_on(
                 "a",
                 if send_ready {
-                    theme::PITCH
+                    theme::pitch()
                 } else {
-                    theme::DUST
+                    theme::dust()
                 },
             ));
 
@@ -401,10 +409,10 @@ impl Component for Rail {
             .content(Content::flex())
             .width(Size::px(theme::RAIL_WIDTH))
             .height(Size::fill())
-            .background(theme::CARBON)
+            .background(theme::carbon())
             .border(
                 Border::new()
-                    .fill(theme::HAIRLINE_SOFT)
+                    .fill(theme::hairline_soft())
                     .width(1.)
                     .alignment(BorderAlignment::Inner),
             )
@@ -426,15 +434,15 @@ impl Component for Rail {
                                     .child(display_italic(
                                         d.map_title,
                                         theme::TITLE_MD,
-                                        theme::BONE,
+                                        theme::bone(),
                                     ))
-                                    .child(caps(d.map_subtitle, theme::COPPER)),
+                                    .child(caps(d.map_subtitle, theme::copper())),
                             )
                             .child(
                                 rect()
                                     .content(Content::flex())
                                     .spacing(4.)
-                                    .child(caps(d.reclaimable, theme::DUST))
+                                    .child(caps(d.reclaimable, theme::dust()))
                                     .child(CountUp {
                                         bytes: reclaimable,
                                         generation,
@@ -442,7 +450,7 @@ impl Component for Rail {
                                     .child(mono(
                                         d.seen_of.replace("{total}", &format_bytes(seen)),
                                         theme::TEXT_SM,
-                                        theme::ASH,
+                                        theme::ash(),
                                     ))
                                     .child(rect().height(Size::px(10.)))
                                     .child(share_bar(&legend)),
@@ -461,18 +469,18 @@ impl Component for Rail {
                                             .child(glyph(
                                                 Glyph::Alert,
                                                 if alarms.is_empty() {
-                                                    theme::DUST
+                                                    theme::dust()
                                                 } else {
-                                                    theme::OXBLOOD
+                                                    theme::oxblood()
                                                 },
                                                 13.,
                                             ))
                                             .child(caps(
                                                 d.alarms_title,
                                                 if alarms.is_empty() {
-                                                    theme::DUST
+                                                    theme::dust()
                                                 } else {
-                                                    theme::mix(theme::OXBLOOD, theme::BONE, 0.3)
+                                                    theme::mix(theme::oxblood(), theme::bone(), 0.3)
                                                 },
                                             )),
                                     )

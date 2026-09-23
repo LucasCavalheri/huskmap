@@ -44,6 +44,9 @@ pub enum Glyph {
     SortDown,
     SortUp,
     Guide,
+    Sun,
+    Moon,
+    System,
 }
 
 impl Glyph {
@@ -89,6 +92,9 @@ impl Glyph {
             Self::SortDown => icon!("sort-down"),
             Self::SortUp => icon!("sort-up"),
             Self::Guide => icon!("guide"),
+            Self::Sun => icon!("sun"),
+            Self::Moon => icon!("moon"),
+            Self::System => icon!("system"),
         }
     }
 
@@ -248,7 +254,7 @@ mod tests {
     use super::*;
     use std::path::Path;
 
-    const GLYPHS: [Glyph; 35] = [
+    const GLYPHS: [Glyph; 38] = [
         Glyph::Worktree,
         Glyph::Ballast,
         Glyph::Toolchain,
@@ -284,6 +290,9 @@ mod tests {
         Glyph::SortDown,
         Glyph::SortUp,
         Glyph::Guide,
+        Glyph::Sun,
+        Glyph::Moon,
+        Glyph::System,
     ];
 
     const BRANDS: [Brand; 17] = [

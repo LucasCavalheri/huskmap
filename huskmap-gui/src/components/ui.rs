@@ -41,7 +41,7 @@ pub fn hairline() -> Rect {
         .content(Content::flex())
         .width(Size::fill())
         .height(Size::px(1.))
-        .background(theme::HAIRLINE_SOFT)
+        .background(theme::hairline_soft())
 }
 
 thread_local! {
@@ -91,7 +91,7 @@ pub fn keycap_on(key: &str, color: Rgb) -> Rect {
         .corner_radius(theme::RADIUS)
         .border(
             Border::new()
-                .fill(theme::mix(color, theme::COPPER, 0.35))
+                .fill(theme::mix(color, theme::copper(), 0.35))
                 .width(1.)
                 .alignment(BorderAlignment::Inner),
         )
@@ -106,9 +106,9 @@ pub fn keycap(key: &str) -> Rect {
         .corner_radius(theme::RADIUS)
         .border(
             Border::new()
-                .fill(theme::HAIRLINE)
+                .fill(theme::hairline())
                 .width(1.)
                 .alignment(BorderAlignment::Inner),
         )
-        .child(mono(key, theme::TEXT_XS, theme::ASH))
+        .child(mono(key, theme::TEXT_XS, theme::ash()))
 }

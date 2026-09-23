@@ -9,7 +9,7 @@ use crate::theme;
 use crate::view_model::{AppState, Intent, ViewMode};
 
 fn tab(icon: Glyph, text: &str, active: bool) -> Rect {
-    let color = if active { theme::BONE } else { theme::DUST };
+    let color = if active { theme::bone() } else { theme::dust() };
     rect()
         .content(Content::flex())
         .horizontal()
@@ -18,13 +18,17 @@ fn tab(icon: Glyph, text: &str, active: bool) -> Rect {
         .padding((8., 14.))
         .corner_radius(theme::RADIUS)
         .background(if active {
-            Color::from(theme::CARBON_RAISED)
+            Color::from(theme::carbon_raised())
         } else {
             Color::TRANSPARENT
         })
         .child(glyph(
             icon,
-            if active { theme::COPPER } else { theme::DUST },
+            if active {
+                theme::copper()
+            } else {
+                theme::dust()
+            },
             14.,
         ))
         .child(mono(text.to_string(), theme::TEXT_SM, color).font_weight(FontWeight::MEDIUM))
@@ -58,7 +62,7 @@ impl Component for TopBar {
             .corner_radius(theme::RADIUS + 1.)
             .border(
                 Border::new()
-                    .fill(theme::HAIRLINE_SOFT)
+                    .fill(theme::hairline_soft())
                     .width(1.)
                     .alignment(BorderAlignment::Inner),
             )
@@ -84,10 +88,10 @@ impl Component for TopBar {
                     format!("{search}_")
                 },
                 theme::TEXT_MD,
-                theme::BONE,
+                theme::bone(),
             )
         } else {
-            mono(d.search_placeholder, theme::TEXT_MD, theme::DUST)
+            mono(d.search_placeholder, theme::TEXT_MD, theme::dust())
         };
         let search_pill = rect()
             .content(Content::flex())
@@ -97,13 +101,13 @@ impl Component for TopBar {
             .cross_align(Alignment::Center)
             .padding((9., 14.))
             .corner_radius(theme::RADIUS)
-            .background(theme::CARBON_RAISED)
+            .background(theme::carbon_raised())
             .border(
                 Border::new()
                     .fill(if searching {
-                        theme::COPPER
+                        theme::copper()
                     } else {
-                        theme::HAIRLINE_SOFT
+                        theme::hairline_soft()
                     })
                     .width(1.)
                     .alignment(BorderAlignment::Inner),
@@ -115,9 +119,9 @@ impl Component for TopBar {
             .child(glyph(
                 Glyph::Search,
                 if searching {
-                    theme::COPPER
+                    theme::copper()
                 } else {
-                    theme::DUST
+                    theme::dust()
                 },
                 14.,
             ))
@@ -129,7 +133,7 @@ impl Component for TopBar {
             .child(if search.is_empty() {
                 keycap("/").into_element()
             } else {
-                mono(found.to_string(), theme::TEXT_XS, theme::ASH).into_element()
+                mono(found.to_string(), theme::TEXT_XS, theme::ash()).into_element()
             });
 
         let mut state_scan = self.state;
@@ -149,11 +153,11 @@ impl Component for TopBar {
             .padding((9., 16.))
             .corner_radius(theme::RADIUS)
             .background(if scanning {
-                theme::CARBON_RAISED
+                theme::carbon_raised()
             } else if lit {
-                theme::mix(theme::COPPER, theme::AMBER, 0.4)
+                theme::mix(theme::copper(), theme::amber(), 0.4)
             } else {
-                theme::COPPER
+                theme::copper()
             })
             .on_pointer_enter(move |_| hover_scan.set(true))
             .on_pointer_leave(move |_| hover_scan.set(false))
@@ -164,20 +168,32 @@ impl Component for TopBar {
             })
             .child(glyph(
                 Glyph::Scan,
-                if scanning { theme::AMBER } else { theme::PITCH },
+                if scanning {
+                    theme::amber()
+                } else {
+                    theme::pitch()
+                },
                 15.,
             ))
             .child(
                 mono(
                     scan_label,
                     theme::TEXT_SM,
-                    if scanning { theme::AMBER } else { theme::PITCH },
+                    if scanning {
+                        theme::amber()
+                    } else {
+                        theme::pitch()
+                    },
                 )
                 .font_weight(FontWeight::SEMI_BOLD),
             )
             .child(keycap_on(
                 "s",
-                if scanning { theme::AMBER } else { theme::PITCH },
+                if scanning {
+                    theme::amber()
+                } else {
+                    theme::pitch()
+                },
             ));
 
         let mut state_help = self.state;
@@ -191,7 +207,7 @@ impl Component for TopBar {
             .padding((9., 12.))
             .corner_radius(theme::RADIUS)
             .background(if help_lit {
-                Color::from(theme::CARBON_RAISED)
+                Color::from(theme::carbon_raised())
             } else {
                 Color::TRANSPARENT
             })
@@ -200,13 +216,21 @@ impl Component for TopBar {
             .on_press(move |_| state_help.write().open_guide(0))
             .child(glyph(
                 Glyph::Help,
-                if help_lit { theme::COPPER } else { theme::ASH },
+                if help_lit {
+                    theme::copper()
+                } else {
+                    theme::ash()
+                },
                 15.,
             ))
             .child(mono(
                 d.guide_open,
                 theme::TEXT_SM,
-                if help_lit { theme::BONE } else { theme::ASH },
+                if help_lit {
+                    theme::bone()
+                } else {
+                    theme::ash()
+                },
             ))
             .child(keycap("?"));
 
@@ -275,21 +299,21 @@ impl Component for StatusBar {
                 .cross_align(Alignment::Center)
                 .padding((3., 9.))
                 .corner_radius(theme::RADIUS)
-                .background(theme::mix(theme::CARBON, theme::COPPER, 0.18))
+                .background(theme::mix(theme::carbon(), theme::copper(), 0.18))
                 .border(
                     Border::new()
-                        .fill(theme::COPPER_DEEP)
+                        .fill(theme::copper_deep())
                         .width(1.)
                         .alignment(BorderAlignment::Inner),
                 )
                 .on_press(move |_| state_up.write().update_open = true)
-                .child(glyph(Glyph::ArrowRight, theme::COPPER, 12.))
+                .child(glyph(Glyph::ArrowRight, theme::copper(), 12.))
                 .child(mono(
                     d.update_available.replace("{v}", &v),
                     theme::TEXT_XS,
-                    theme::COPPER,
+                    theme::copper(),
                 ))
-                .child(keycap_on("u", theme::COPPER))
+                .child(keycap_on("u", theme::copper()))
                 .into_element(),
             None => rect().into_element(),
         };
@@ -302,16 +326,57 @@ impl Component for StatusBar {
                 .padding((2., 7.))
                 .corner_radius(2.)
                 .background(if on {
-                    Color::from(theme::CARBON_HOVER)
+                    Color::from(theme::carbon_hover())
                 } else {
                     Color::TRANSPARENT
                 })
                 .child(mono(
                     text.to_string(),
                     theme::TEXT_XS,
-                    if on { theme::BONE } else { theme::DUST },
+                    if on { theme::bone() } else { theme::dust() },
                 ))
         };
+        let current_theme = self.state.read().theme;
+        let theme_button = |choice: crate::theme::ThemeChoice, icon: Glyph, label: &str| {
+            let mut state = self.state;
+            let on = current_theme == choice;
+            rect()
+                .content(Content::flex())
+                .padding((3., 6.))
+                .corner_radius(2.)
+                .background(if on {
+                    Color::from(theme::carbon_hover())
+                } else {
+                    Color::TRANSPARENT
+                })
+                .on_press(move |_| state.write().theme = choice)
+                .a11y_alt(label.to_string())
+                .child(glyph(
+                    icon,
+                    if on { theme::bone() } else { theme::dust() },
+                    12.,
+                ))
+        };
+        let themes = rect()
+            .content(Content::flex())
+            .horizontal()
+            .spacing(2.)
+            .cross_align(Alignment::Center)
+            .child(theme_button(
+                crate::theme::ThemeChoice::System,
+                Glyph::System,
+                d.theme_system,
+            ))
+            .child(theme_button(
+                crate::theme::ThemeChoice::Light,
+                Glyph::Sun,
+                d.theme_light,
+            ))
+            .child(theme_button(
+                crate::theme::ThemeChoice::Dark,
+                Glyph::Moon,
+                d.theme_dark,
+            ));
         let mut keys = rect()
             .horizontal()
             .spacing(14.)
@@ -324,7 +389,7 @@ impl Component for StatusBar {
                     .spacing(5.)
                     .cross_align(Alignment::Center)
                     .child(keycap(k))
-                    .child(mono(label.to_lowercase(), theme::TEXT_XS, theme::DUST)),
+                    .child(mono(label.to_lowercase(), theme::TEXT_XS, theme::dust())),
             );
         }
         rect()
@@ -335,10 +400,10 @@ impl Component for StatusBar {
             .cross_align(Alignment::Center)
             .main_align(Alignment::SpaceBetween)
             .padding((0., theme::GUTTER))
-            .background(theme::PITCH)
+            .background(theme::pitch())
             .border(
                 Border::new()
-                    .fill(theme::HAIRLINE_SOFT)
+                    .fill(theme::hairline_soft())
                     .width(1.)
                     .alignment(BorderAlignment::Inner),
             )
@@ -355,12 +420,12 @@ impl Component for StatusBar {
                             .height(Size::px(6.))
                             .corner_radius(3.)
                             .background(if scanning {
-                                theme::AMBER
+                                theme::amber()
                             } else {
-                                theme::VERDIGRIS
+                                theme::verdigris()
                             }),
                     )
-                    .child(mono(line, theme::TEXT_SM, theme::ASH).max_lines(1)),
+                    .child(mono(line, theme::TEXT_SM, theme::ash()).max_lines(1)),
             )
             .child(
                 rect()
@@ -370,13 +435,14 @@ impl Component for StatusBar {
                     .cross_align(Alignment::Center)
                     .child(update_chip)
                     .child(keys)
+                    .child(themes)
                     .child(
                         rect()
                             .content(Content::flex())
                             .horizontal()
                             .spacing(2.)
                             .cross_align(Alignment::Center)
-                            .child(glyph(Glyph::Language, theme::DUST, 13.))
+                            .child(glyph(Glyph::Language, theme::dust(), 13.))
                             .child(rect().width(Size::px(4.)))
                             .child(
                                 rect()

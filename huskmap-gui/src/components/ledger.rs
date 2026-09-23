@@ -30,11 +30,11 @@ impl Component for Row {
         let id_mark = r.id.clone();
         let tone = theme::tone_color(r.tone);
         let bg = if r.selected {
-            theme::CARBON_HOVER
+            theme::carbon_hover()
         } else if *hovered.read() {
-            theme::CARBON_RAISED
+            theme::carbon_raised()
         } else {
-            theme::CARBON
+            theme::carbon()
         };
         rect()
             .content(Content::flex())
@@ -58,7 +58,7 @@ impl Component for Row {
                     .width(Size::px(3.))
                     .height(Size::fill())
                     .background(if r.selected {
-                        Color::from(theme::COPPER)
+                        Color::from(theme::copper())
                     } else {
                         Color::TRANSPARENT
                     }),
@@ -77,20 +77,20 @@ impl Component for Row {
                     .border(
                         Border::new()
                             .fill(if r.marked {
-                                theme::COPPER
+                                theme::copper()
                             } else {
-                                theme::HAIRLINE
+                                theme::hairline()
                             })
                             .width(1.2)
                             .alignment(BorderAlignment::Inner),
                     )
                     .background(if r.marked {
-                        Color::from(theme::COPPER)
+                        Color::from(theme::copper())
                     } else {
                         Color::TRANSPARENT
                     })
                     .child(if r.marked {
-                        glyph(Glyph::Mark, theme::PITCH, 12.).into_element()
+                        glyph(Glyph::Mark, theme::pitch(), 12.).into_element()
                     } else {
                         rect().into_element()
                     }),
@@ -102,7 +102,7 @@ impl Component for Row {
                     .width(Size::px(COL_SIZE))
                     .cross_align(Alignment::End)
                     .child(
-                        mono(r.size_label.clone(), theme::TEXT_MD, theme::BONE)
+                        mono(r.size_label.clone(), theme::TEXT_MD, theme::bone())
                             .font_weight(FontWeight::MEDIUM),
                     ),
             )
@@ -111,7 +111,7 @@ impl Component for Row {
                     .content(Content::flex())
                     .width(Size::px(COL_AGE))
                     .cross_align(Alignment::End)
-                    .child(mono(r.age_label.clone(), theme::TEXT_SM, theme::DUST)),
+                    .child(mono(r.age_label.clone(), theme::TEXT_SM, theme::dust())),
             )
             .child(
                 rect()
@@ -119,12 +119,12 @@ impl Component for Row {
                     .width(Size::flex(1.))
                     .spacing(2.)
                     .child(
-                        mono(r.name.clone(), theme::TEXT_MD, theme::BONE)
+                        mono(r.name.clone(), theme::TEXT_MD, theme::bone())
                             .max_lines(1)
                             .text_overflow(TextOverflow::Ellipsis),
                     )
                     .child(
-                        mono(r.path.clone(), theme::TEXT_XS, theme::DUST)
+                        mono(r.path.clone(), theme::TEXT_XS, theme::dust())
                             .max_lines(1)
                             .text_overflow(TextOverflow::Ellipsis),
                     ),
@@ -144,7 +144,7 @@ impl Component for Row {
                                 text.clone()
                             },
                             theme::TEXT_SM,
-                            theme::mix(tone, theme::BONE, 0.2),
+                            theme::mix(tone, theme::bone(), 0.2),
                         )
                         .max_lines(1)
                         .text_overflow(TextOverflow::Ellipsis)
@@ -152,13 +152,13 @@ impl Component for Row {
                         (None, Tone::Free) => mono(
                             copy::get().tone_free,
                             theme::TEXT_SM,
-                            theme::mix(theme::VERDIGRIS, theme::PITCH, 0.2),
+                            theme::mix(theme::verdigris(), theme::pitch(), 0.2),
                         )
                         .into_element(),
                         (None, Tone::Caution) => mono(
                             copy::get().tone_caution,
                             theme::TEXT_SM,
-                            theme::mix(theme::AMBER, theme::PITCH, 0.2),
+                            theme::mix(theme::amber(), theme::pitch(), 0.2),
                         )
                         .into_element(),
                         (None, _) => rect().into_element(),
@@ -169,9 +169,9 @@ impl Component for Row {
                     .content(Content::flex())
                     .width(Size::px(18.))
                     .child(match r.brand {
-                        Some(b) => brand(b, theme::ASH, 15.).into_element(),
+                        Some(b) => brand(b, theme::ash(), 15.).into_element(),
                         None if r.agent.is_some() => {
-                            agent_mark(r.agent, theme::ASH, 15.).into_element()
+                            agent_mark(r.agent, theme::ash(), 15.).into_element()
                         }
                         None => rect().into_element(),
                     }),
@@ -198,9 +198,9 @@ impl Component for ChipButton {
         let chip = v.chip;
         let lit = *hovered.read();
         let text = if v.active || lit {
-            theme::BONE
+            theme::bone()
         } else {
-            theme::ASH
+            theme::ash()
         };
         let mut body = rect()
             .content(Content::flex())
@@ -210,18 +210,18 @@ impl Component for ChipButton {
             .padding((4., 10.))
             .corner_radius(theme::RADIUS + 8.)
             .background(if v.active {
-                theme::mix(theme::CARBON, theme::COPPER, 0.22)
+                theme::mix(theme::carbon(), theme::copper(), 0.22)
             } else if lit {
-                theme::CARBON_HOVER
+                theme::carbon_hover()
             } else {
-                theme::CARBON_RAISED
+                theme::carbon_raised()
             })
             .border(
                 Border::new()
                     .fill(if v.active {
-                        theme::COPPER_DEEP
+                        theme::copper_deep()
                     } else {
-                        theme::HAIRLINE_SOFT
+                        theme::hairline_soft()
                     })
                     .width(1.)
                     .alignment(BorderAlignment::Inner),
@@ -240,7 +240,7 @@ impl Component for ChipButton {
             (Chip::Kind(kind), _) => body.child(glyph(
                 Glyph::for_kind(kind),
                 if v.active {
-                    theme::COPPER
+                    theme::copper()
                 } else {
                     theme::kind_color(kind)
                 },
@@ -254,7 +254,7 @@ impl Component for ChipButton {
         };
         body = body.child(mono(v.label.clone(), theme::TEXT_XS, text));
         if let Some(n) = v.count {
-            body = body.child(mono(n.to_string(), theme::TEXT_XS, theme::DUST));
+            body = body.child(mono(n.to_string(), theme::TEXT_XS, theme::dust()));
         }
         body
     }
@@ -287,7 +287,7 @@ fn group(label: &str, chips: &[ChipView], state: State<AppState>) -> Rect {
             rect()
                 .width(Size::px(GROUP_LABEL))
                 .padding((6., 0., 0., 0.))
-                .child(caps(label, theme::DUST)),
+                .child(caps(label, theme::dust())),
         )
         .child(wrap)
 }
@@ -301,16 +301,16 @@ fn button(text: String, accent: bool) -> Rect {
         .padding((6., 12.))
         .corner_radius(theme::RADIUS)
         .background(if accent {
-            Color::from(theme::mix(theme::CARBON, theme::COPPER, 0.18))
+            Color::from(theme::mix(theme::carbon(), theme::copper(), 0.18))
         } else {
             Color::TRANSPARENT
         })
         .border(
             Border::new()
                 .fill(if accent {
-                    theme::COPPER_DEEP
+                    theme::copper_deep()
                 } else {
-                    theme::HAIRLINE
+                    theme::hairline()
                 })
                 .width(1.)
                 .alignment(BorderAlignment::Inner),
@@ -318,7 +318,11 @@ fn button(text: String, accent: bool) -> Rect {
         .child(mono(
             text,
             theme::TEXT_SM,
-            if accent { theme::COPPER } else { theme::BONE },
+            if accent {
+                theme::copper()
+            } else {
+                theme::bone()
+            },
         ))
 }
 
@@ -380,8 +384,8 @@ fn filter_bar(bar: &FilterBar, state: State<AppState>) -> Rect {
             .spacing(14.)
             .cross_align(Alignment::Center)
             .padding((6., 0., 0., 0.))
-            .child(glyph(Glyph::Filter, theme::DUST, 14.))
-            .child(mono(bar.summary.clone(), theme::TEXT_SM, theme::BONE))
+            .child(glyph(Glyph::Filter, theme::dust(), 14.))
+            .child(mono(bar.summary.clone(), theme::TEXT_SM, theme::bone()))
             .child(
                 rect()
                     .content(Content::flex())
@@ -390,9 +394,9 @@ fn filter_bar(bar: &FilterBar, state: State<AppState>) -> Rect {
                     .spacing(6.)
                     .cross_align(Alignment::Center)
                     .on_press(move |_| s_help.write().open_guide(5))
-                    .child(glyph(Glyph::Help, theme::DUST, 12.))
+                    .child(glyph(Glyph::Help, theme::dust(), 12.))
                     .child(
-                        mono(d.filter_hint, theme::TEXT_XS, theme::DUST)
+                        mono(d.filter_hint, theme::TEXT_XS, theme::dust())
                             .max_lines(1)
                             .text_overflow(TextOverflow::Ellipsis),
                     ),
@@ -418,7 +422,7 @@ fn column(
         .spacing(4.)
         .cross_align(Alignment::Center)
         .on_press(move |_| state.write().toggle_sort(key))
-        .child(caps(label, if on { theme::BONE } else { theme::DUST }));
+        .child(caps(label, if on { theme::bone() } else { theme::dust() }));
     if on {
         title = title.child(glyph(
             if sort.desc {
@@ -426,7 +430,7 @@ fn column(
             } else {
                 Glyph::SortUp
             },
-            theme::COPPER,
+            theme::copper(),
             11.,
         ));
     }
@@ -465,7 +469,7 @@ impl Component for Ledger {
             .padding((0., 18., 0., 35.))
             .border(
                 Border::new()
-                    .fill(theme::HAIRLINE_SOFT)
+                    .fill(theme::hairline_soft())
                     .width(1.)
                     .alignment(BorderAlignment::Inner),
             )
@@ -497,7 +501,7 @@ impl Component for Ledger {
             .child(
                 rect()
                     .width(Size::px(COL_WARDS))
-                    .child(caps(d.detail_wards, theme::DUST)),
+                    .child(caps(d.detail_wards, theme::dust())),
             )
             .child(rect().width(Size::px(18.)));
         let body = if rows.is_empty() {
@@ -507,8 +511,8 @@ impl Component for Ledger {
                 .height(Size::flex(1.))
                 .center()
                 .spacing(12.)
-                .child(glyph(Glyph::Search, theme::DUST, 28.))
-                .child(mono(d.search_none, theme::TEXT_MD, theme::ASH))
+                .child(glyph(Glyph::Search, theme::dust(), 28.))
+                .child(mono(d.search_none, theme::TEXT_MD, theme::ash()))
                 .into_element()
         } else {
             let len = rows.len();

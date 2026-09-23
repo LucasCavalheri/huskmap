@@ -415,6 +415,8 @@ pub struct AppState {
     pub sort: Sort,
     pub guide_open: bool,
     pub guide_section: usize,
+    /// System, light or dark. The window resolves System against the desktop.
+    pub theme: crate::theme::ThemeChoice,
     pub drawer_open: bool,
     pub confirm: Option<ConfirmView>,
     pub status: Option<String>,
@@ -1336,6 +1338,7 @@ impl AppState {
             // Keep what is there: chips and typed filters add up.
             "/" => self.searching = true,
             "?" => self.open_guide(0),
+            "t" => self.theme = self.theme.next(),
             "tab" => {
                 self.mode = match self.mode {
                     ViewMode::Map => ViewMode::Ledger,
@@ -1860,6 +1863,11 @@ mod tests {
             s.key("a");
             assert_eq!(s.key("enter"), Intent::Apply);
             assert_eq!(s.key("?"), Intent::None);
+            s.confirm = None;
+            s.key("t");
+            assert_eq!(s.theme, crate::theme::ThemeChoice::Light);
+            s.key("t");
+            assert_eq!(s.theme, crate::theme::ThemeChoice::Dark);
         });
     }
 

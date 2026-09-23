@@ -53,6 +53,9 @@ replaced with `white` so the app can tint via a color filter. Geometry is unchan
 | `sort-down` | `ArrowDown01Icon` |
 | `sort-up` | `ArrowUp01Icon` |
 | `guide` | `BookOpen01Icon` |
+| `sun` | `Sun03Icon` |
+| `moon` | `Moon02Icon` |
+| `system` | `ComputerIcon` |
 
 ## License
 

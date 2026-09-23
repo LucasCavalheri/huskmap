@@ -26,14 +26,16 @@ fn mark(m: GuideMark, term: &str) -> Element {
             .height(Size::px(26.))
             .corner_radius(13.)
             .center()
-            .background(theme::mix(theme::CARBON, theme::COPPER, 0.25))
+            .background(theme::mix(theme::carbon(), theme::copper(), 0.25))
             .border(
                 Border::new()
-                    .fill(theme::COPPER_DEEP)
+                    .fill(theme::copper_deep())
                     .width(1.)
                     .alignment(BorderAlignment::Inner),
             )
-            .child(mono(n.to_string(), theme::TEXT_SM, theme::COPPER).font_weight(FontWeight::BOLD))
+            .child(
+                mono(n.to_string(), theme::TEXT_SM, theme::copper()).font_weight(FontWeight::BOLD),
+            )
             .into_element(),
         GuideMark::Kind(kind) => {
             glyph(Glyph::for_kind(kind), theme::kind_color(kind), 18.).into_element()
@@ -58,7 +60,7 @@ fn mark(m: GuideMark, term: &str) -> Element {
                     .width(Size::px(5.))
                     .height(Size::px(5.))
                     .corner_radius(3.)
-                    .background(theme::DUST),
+                    .background(theme::dust()),
             )
             .into_element(),
     }
@@ -70,16 +72,16 @@ fn item_row(it: &GuideItem) -> Rect {
         GuideMark::Code => rect()
             .padding((3., 8.))
             .corner_radius(theme::RADIUS)
-            .background(theme::PITCH)
+            .background(theme::pitch())
             .border(
                 Border::new()
-                    .fill(theme::HAIRLINE)
+                    .fill(theme::hairline())
                     .width(1.)
                     .alignment(BorderAlignment::Inner),
             )
-            .child(mono(it.term, theme::TEXT_SM, theme::AMBER))
+            .child(mono(it.term, theme::TEXT_SM, theme::amber()))
             .into_element(),
-        _ => mono(it.term, theme::TEXT_MD, theme::BONE)
+        _ => mono(it.term, theme::TEXT_MD, theme::bone())
             .font_weight(FontWeight::SEMI_BOLD)
             .into_element(),
     };
@@ -107,7 +109,7 @@ fn item_row(it: &GuideItem) -> Rect {
                 .width(Size::flex(1.))
                 .spacing(if wide_term { 7. } else { 3. })
                 .child(term)
-                .child(mono(it.text, theme::TEXT_SM, theme::ASH)),
+                .child(mono(it.text, theme::TEXT_SM, theme::ash())),
         )
 }
 
@@ -138,7 +140,7 @@ impl Component for GuideModal {
             .height(Size::fill())
             .spacing(2.)
             .padding((26., 14.))
-            .background(theme::CARBON)
+            .background(theme::carbon())
             .child(
                 rect()
                     .content(Content::flex())
@@ -146,8 +148,8 @@ impl Component for GuideModal {
                     .spacing(8.)
                     .cross_align(Alignment::Center)
                     .padding((0., 10., 16., 10.))
-                    .child(glyph(Glyph::Guide, theme::COPPER, 15.))
-                    .child(caps(d.guide_open, theme::COPPER)),
+                    .child(glyph(Glyph::Guide, theme::copper(), 15.))
+                    .child(caps(d.guide_open, theme::copper())),
             );
         for (i, s) in guide.sections.iter().enumerate() {
             let mut state = self.state;
@@ -162,7 +164,7 @@ impl Component for GuideModal {
                     .padding((8., 10.))
                     .corner_radius(theme::RADIUS)
                     .background(if on {
-                        Color::from(theme::CARBON_HOVER)
+                        Color::from(theme::carbon_hover())
                     } else {
                         Color::TRANSPARENT
                     })
@@ -170,13 +172,13 @@ impl Component for GuideModal {
                     .child(mono(
                         (i + 1).to_string(),
                         theme::TEXT_XS,
-                        if on { theme::COPPER } else { theme::DUST },
+                        if on { theme::copper() } else { theme::dust() },
                     ))
                     .child(
                         mono(
                             s.title,
                             theme::TEXT_SM,
-                            if on { theme::BONE } else { theme::ASH },
+                            if on { theme::bone() } else { theme::ash() },
                         )
                         .max_lines(1),
                     ),
@@ -199,11 +201,11 @@ impl Component for GuideModal {
                 .corner_radius(theme::RADIUS)
                 .border(
                     Border::new()
-                        .fill(theme::HAIRLINE)
+                        .fill(theme::hairline())
                         .width(1.)
                         .alignment(BorderAlignment::Inner),
                 )
-                .child(mono(text.to_string(), theme::TEXT_SM, theme::BONE))
+                .child(mono(text.to_string(), theme::TEXT_SM, theme::bone()))
         };
         let mut footer = rect()
             .content(Content::flex())
@@ -214,7 +216,7 @@ impl Component for GuideModal {
             .child(rect().width(Size::flex(1.)).child(mono(
                 format!("{} / {}", at + 1, last + 1),
                 theme::TEXT_XS,
-                theme::DUST,
+                theme::dust(),
             )));
         if at > 0 {
             footer = footer.child(
@@ -244,13 +246,13 @@ impl Component for GuideModal {
                 .cross_align(Alignment::Center)
                 .padding((9., 16.))
                 .corner_radius(theme::RADIUS)
-                .background(theme::COPPER)
+                .background(theme::copper())
                 .on_press(move |_| s_close.write().guide_open = false)
                 .child(
-                    mono(d.guide_close, theme::TEXT_SM, theme::PITCH)
+                    mono(d.guide_close, theme::TEXT_SM, theme::pitch())
                         .font_weight(FontWeight::SEMI_BOLD),
                 )
-                .child(keycap_on("esc", theme::PITCH)),
+                .child(keycap_on("esc", theme::pitch())),
         );
 
         let page = rect()
@@ -259,9 +261,9 @@ impl Component for GuideModal {
             .height(Size::fill())
             .padding((30., 34., 22., 34.))
             .spacing(18.)
-            .child(caps(guide.title, theme::DUST))
-            .child(display(sec.title, theme::TITLE_MD, theme::BONE))
-            .child(mono(sec.lead, theme::TEXT_MD, theme::ASH))
+            .child(caps(guide.title, theme::dust()))
+            .child(display(sec.title, theme::TITLE_MD, theme::bone()))
+            .child(mono(sec.lead, theme::TEXT_MD, theme::ash()))
             .child(
                 rect()
                     .content(Content::flex())
@@ -278,14 +280,14 @@ impl Component for GuideModal {
             .height(Size::px(640.))
             .corner_radius(theme::RADIUS + 2.)
             .overflow(Overflow::Clip)
-            .background(theme::CARBON_RAISED)
+            .background(theme::carbon_raised())
             .border(
                 Border::new()
-                    .fill(theme::HAIRLINE)
+                    .fill(theme::hairline())
                     .width(1.)
                     .alignment(BorderAlignment::Inner),
             )
-            .shadow((0.0, 30.0, 80.0, 0.0, (0u8, 0u8, 0u8, 200u8)))
+            .shadow((0.0, 30.0, 80.0, 0.0, theme::shadow(1.0)))
             .offset_y((1.0 - t) * 18.0)
             .opacity(t)
             .child(nav)
@@ -298,7 +300,7 @@ impl Component for GuideModal {
             .width(Size::percent(100.))
             .height(Size::percent(100.))
             .center()
-            .background((0u8, 0u8, 0u8, (170.0 * t) as u8))
+            .background(theme::scrim(t))
             .child(card)
     }
 }

@@ -38,16 +38,16 @@ impl Component for Confirm {
                     .horizontal()
                     .spacing(9.)
                     .cross_align(Alignment::Center)
-                    .child(glyph(Glyph::Trash, theme::DUST, 12.))
+                    .child(glyph(Glyph::Trash, theme::dust(), 12.))
                     .child(
-                        mono(p.clone(), theme::TEXT_SM, theme::ASH)
+                        mono(p.clone(), theme::TEXT_SM, theme::ash())
                             .max_lines(1)
                             .text_overflow(TextOverflow::Ellipsis),
                     ),
             );
         }
         if v.more > 0 {
-            paths = paths.child(mono(format!("+{}", v.more), theme::TEXT_SM, theme::DUST));
+            paths = paths.child(mono(format!("+{}", v.more), theme::TEXT_SM, theme::dust()));
         }
 
         let mut card = rect()
@@ -56,14 +56,14 @@ impl Component for Confirm {
             .padding(30.)
             .spacing(20.)
             .corner_radius(theme::RADIUS + 2.)
-            .background(theme::CARBON_RAISED)
+            .background(theme::carbon_raised())
             .border(
                 Border::new()
-                    .fill(theme::HAIRLINE)
+                    .fill(theme::hairline())
                     .width(1.)
                     .alignment(BorderAlignment::Inner),
             )
-            .shadow((0.0, 30.0, 80.0, 0.0, (0u8, 0u8, 0u8, 200u8)))
+            .shadow((0.0, 30.0, 80.0, 0.0, theme::shadow(1.0)))
             .offset_y((1.0 - t) * 18.0)
             .opacity(t)
             .child(
@@ -72,19 +72,19 @@ impl Component for Confirm {
                     .horizontal()
                     .spacing(9.)
                     .cross_align(Alignment::Center)
-                    .child(glyph(Glyph::Alert, theme::OXBLOOD, 14.))
+                    .child(glyph(Glyph::Alert, theme::oxblood(), 14.))
                     .child(caps(
                         d.apply_open,
-                        theme::mix(theme::OXBLOOD, theme::BONE, 0.3),
+                        theme::mix(theme::oxblood(), theme::bone(), 0.3),
                     )),
             )
-            .child(display(v.title.clone(), theme::TITLE_MD, theme::BONE).max_lines(2))
+            .child(display(v.title.clone(), theme::TITLE_MD, theme::bone()).max_lines(2))
             .child(display(
                 v.bytes_label.clone(),
                 theme::TITLE_LG,
-                theme::COPPER,
+                theme::copper(),
             ))
-            .child(mono(v.body.clone(), theme::TEXT_MD, theme::ASH).max_lines(4))
+            .child(mono(v.body.clone(), theme::TEXT_MD, theme::ash()).max_lines(4))
             .child(paths);
         if let Some(note) = &v.forced_note {
             card = card.child(
@@ -96,14 +96,14 @@ impl Component for Confirm {
                     .cross_align(Alignment::Center)
                     .padding((9., 12.))
                     .corner_radius(theme::RADIUS)
-                    .background(theme::OXBLOOD_DEEP)
-                    .child(glyph(Glyph::Alert, theme::OXBLOOD, 14.))
+                    .background(theme::oxblood_deep())
+                    .child(glyph(Glyph::Alert, theme::oxblood(), 14.))
                     .child(
                         rect().width(Size::flex(1.)).child(
                             mono(
                                 note.clone(),
                                 theme::TEXT_SM,
-                                theme::mix(theme::OXBLOOD, theme::BONE, 0.5),
+                                theme::mix(theme::oxblood(), theme::bone(), 0.5),
                             )
                             .max_lines(3),
                         ),
@@ -117,8 +117,8 @@ impl Component for Confirm {
                     .horizontal()
                     .spacing(9.)
                     .cross_align(Alignment::Center)
-                    .child(glyph(Glyph::Locked, theme::AMBER, 13.))
-                    .child(mono(note.clone(), theme::TEXT_SM, theme::AMBER)),
+                    .child(glyph(Glyph::Locked, theme::amber(), 13.))
+                    .child(mono(note.clone(), theme::TEXT_SM, theme::amber())),
             );
         }
         card = card.child(
@@ -138,12 +138,12 @@ impl Component for Confirm {
                         .corner_radius(theme::RADIUS)
                         .border(
                             Border::new()
-                                .fill(theme::HAIRLINE)
+                                .fill(theme::hairline())
                                 .width(1.)
                                 .alignment(BorderAlignment::Inner),
                         )
                         .on_press(move |_| keep.write().confirm = None)
-                        .child(mono(d.apply_withdraw, theme::TEXT_MD, theme::BONE))
+                        .child(mono(d.apply_withdraw, theme::TEXT_MD, theme::bone()))
                         .child(keycap("esc")),
                 )
                 .child(
@@ -154,14 +154,14 @@ impl Component for Confirm {
                         .cross_align(Alignment::Center)
                         .padding((11., 18.))
                         .corner_radius(theme::RADIUS)
-                        .background(theme::OXBLOOD)
+                        .background(theme::oxblood())
                         .on_press(move |_| send.write().request = Some(Intent::Apply))
-                        .child(glyph(Glyph::Trash, theme::BONE, 15.))
+                        .child(glyph(Glyph::Trash, theme::on_danger(), 15.))
                         .child(
-                            mono(d.apply_commit, theme::TEXT_MD, theme::BONE)
+                            mono(d.apply_commit, theme::TEXT_MD, theme::on_danger())
                                 .font_weight(FontWeight::SEMI_BOLD),
                         )
-                        .child(keycap_on("enter", theme::BONE)),
+                        .child(keycap_on("enter", theme::on_danger())),
                 ),
         );
 
@@ -172,7 +172,7 @@ impl Component for Confirm {
             .width(Size::percent(100.))
             .height(Size::percent(100.))
             .center()
-            .background((0u8, 0u8, 0u8, (170.0 * t) as u8))
+            .background(theme::scrim(t))
             .child(card)
     }
 }

@@ -29,11 +29,11 @@ fn ghost(text: &str) -> Rect {
         .corner_radius(theme::RADIUS)
         .border(
             Border::new()
-                .fill(theme::HAIRLINE)
+                .fill(theme::hairline())
                 .width(1.)
                 .alignment(BorderAlignment::Inner),
         )
-        .child(mono(text.to_string(), theme::TEXT_SM, theme::BONE))
+        .child(mono(text.to_string(), theme::TEXT_SM, theme::bone()))
 }
 
 impl Component for UpdateModal {
@@ -63,8 +63,8 @@ impl Component for UpdateModal {
                     .content(Content::flex())
                     .horizontal()
                     .spacing(9.)
-                    .child(mono("·", theme::TEXT_SM, theme::COPPER))
-                    .child(mono(line.clone(), theme::TEXT_SM, theme::ASH).max_lines(2)),
+                    .child(mono("·", theme::TEXT_SM, theme::copper()))
+                    .child(mono(line.clone(), theme::TEXT_SM, theme::ash()).max_lines(2)),
             );
         }
 
@@ -82,9 +82,9 @@ impl Component for UpdateModal {
             .padding((11., 18.))
             .corner_radius(theme::RADIUS)
             .background(if blocked {
-                theme::CARBON_HOVER
+                theme::carbon_hover()
             } else {
-                theme::COPPER
+                theme::copper()
             })
             .on_press(move |_| {
                 if !blocked {
@@ -93,20 +93,32 @@ impl Component for UpdateModal {
             })
             .child(glyph(
                 Glyph::Scan,
-                if blocked { theme::AMBER } else { theme::PITCH },
+                if blocked {
+                    theme::amber()
+                } else {
+                    theme::pitch()
+                },
                 15.,
             ))
             .child(
                 mono(
                     primary_label,
                     theme::TEXT_MD,
-                    if blocked { theme::AMBER } else { theme::PITCH },
+                    if blocked {
+                        theme::amber()
+                    } else {
+                        theme::pitch()
+                    },
                 )
                 .font_weight(FontWeight::SEMI_BOLD),
             )
             .child(keycap_on(
                 "enter",
-                if blocked { theme::AMBER } else { theme::PITCH },
+                if blocked {
+                    theme::amber()
+                } else {
+                    theme::pitch()
+                },
             ));
 
         let mut card = rect()
@@ -115,25 +127,25 @@ impl Component for UpdateModal {
             .padding(30.)
             .spacing(18.)
             .corner_radius(theme::RADIUS + 2.)
-            .background(theme::CARBON_RAISED)
+            .background(theme::carbon_raised())
             .border(
                 Border::new()
-                    .fill(theme::HAIRLINE)
+                    .fill(theme::hairline())
                     .width(1.)
                     .alignment(BorderAlignment::Inner),
             )
-            .shadow((0.0, 30.0, 80.0, 0.0, (0u8, 0u8, 0u8, 200u8)))
+            .shadow((0.0, 30.0, 80.0, 0.0, theme::shadow(1.0)))
             .offset_y((1.0 - t) * 18.0)
             .opacity(t)
             .child(caps(
                 d.update_available.replace("{v}", &o.version),
-                theme::COPPER,
+                theme::copper(),
             ))
-            .child(display(d.update_title, theme::TITLE_MD, theme::BONE))
+            .child(display(d.update_title, theme::TITLE_MD, theme::bone()))
             .child(notes);
         if self.applying {
-            card =
-                card.child(mono(d.update_during_apply, theme::TEXT_SM, theme::AMBER).max_lines(2));
+            card = card
+                .child(mono(d.update_during_apply, theme::TEXT_SM, theme::amber()).max_lines(2));
         }
         card = card
             .child(
@@ -175,12 +187,12 @@ impl Component for UpdateModal {
                             .corner_radius(theme::RADIUS)
                             .border(
                                 Border::new()
-                                    .fill(theme::HAIRLINE)
+                                    .fill(theme::hairline())
                                     .width(1.)
                                     .alignment(BorderAlignment::Inner),
                             )
                             .on_press(move |_| later.write().update_open = false)
-                            .child(mono(d.update_later, theme::TEXT_MD, theme::BONE))
+                            .child(mono(d.update_later, theme::TEXT_MD, theme::bone()))
                             .child(keycap("esc")),
                     )
                     .child(primary),
@@ -192,7 +204,7 @@ impl Component for UpdateModal {
             .width(Size::percent(100.))
             .height(Size::percent(100.))
             .center()
-            .background((0u8, 0u8, 0u8, (170.0 * t) as u8))
+            .background(theme::scrim(t))
             .child(card)
     }
 }

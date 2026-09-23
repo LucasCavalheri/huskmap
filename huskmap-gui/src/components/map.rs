@@ -108,16 +108,16 @@ struct Frame<'a> {
 
 fn draw(canvas: &SkCanvas, w: f32, h: f32, f: &Frame<'_>) {
     let Dial { cx, cy, r } = f.dial;
-    canvas.draw_rect(SkRect::from_wh(w, h), &fill(theme::PITCH, 1.0));
+    canvas.draw_rect(SkRect::from_wh(w, h), &fill(theme::pitch(), 1.0));
 
     // Soil: a warm bloom under the dial.
     canvas.draw_circle(
         (cx, cy),
         r * 1.05,
-        &glow(theme::COPPER_DEEP, 0.10, r * 0.35),
+        &glow(theme::copper_deep(), 0.10, r * 0.35),
     );
-    canvas.draw_circle((cx, cy), r * 0.55, &glow(theme::COPPER, 0.035, r * 0.25));
-    canvas.draw_circle((cx, cy), r * OUTER_R, &fill(theme::CARBON, 0.55));
+    canvas.draw_circle((cx, cy), r * 0.55, &glow(theme::copper(), 0.035, r * 0.25));
+    canvas.draw_circle((cx, cy), r * OUTER_R, &fill(theme::carbon(), 0.55));
 
     // Sector wedges.
     let secs = sectors();
@@ -149,24 +149,24 @@ fn draw(canvas: &SkCanvas, w: f32, h: f32, f: &Frame<'_>) {
         // divider
         let (x0, y0) = f.dial.at(sec.start, INNER_R * 0.8);
         let (x1, y1) = f.dial.at(sec.start, OUTER_R + 0.035);
-        canvas.draw_line((x0, y0), (x1, y1), &stroke(theme::HAIRLINE, 0.9, 1.0));
+        canvas.draw_line((x0, y0), (x1, y1), &stroke(theme::hairline(), 0.9, 1.0));
     }
 
     // Age rings, dotted.
     for (i, (_, rr)) in rings().iter().enumerate() {
         let dots = (rr * 220.0) as usize;
-        let dot = fill(theme::ASH, 0.10 + i as f32 * 0.02);
+        let dot = fill(theme::ash(), 0.10 + i as f32 * 0.02);
         for d in 0..dots {
             let a = d as f32 / dots as f32 * TAU;
             let (x, y) = f.dial.at(a, *rr);
             canvas.draw_circle((x, y), 0.7, &dot);
         }
     }
-    canvas.draw_circle((cx, cy), r * OUTER_R, &stroke(theme::HAIRLINE, 1.0, 1.0));
+    canvas.draw_circle((cx, cy), r * OUTER_R, &stroke(theme::hairline(), 1.0, 1.0));
     canvas.draw_circle(
         (cx, cy),
         r * (OUTER_R + 0.035),
-        &stroke(theme::HAIRLINE_SOFT, 1.0, 1.0),
+        &stroke(theme::hairline_soft(), 1.0, 1.0),
     );
 
     // Bezel ticks.
@@ -176,7 +176,11 @@ fn draw(canvas: &SkCanvas, w: f32, h: f32, f: &Frame<'_>) {
         let (x0, y0) = f.dial.at(a, OUTER_R + 0.035);
         let (x1, y1) = f.dial.at(a, OUTER_R + if major { 0.075 } else { 0.05 });
         let tick = stroke(
-            if major { theme::COPPER } else { theme::DUST },
+            if major {
+                theme::copper()
+            } else {
+                theme::dust()
+            },
             if major { 0.7 } else { 0.35 },
             if major { 1.2 } else { 0.8 },
         );
@@ -200,12 +204,12 @@ fn draw(canvas: &SkCanvas, w: f32, h: f32, f: &Frame<'_>) {
         wedge.line_to((x1, y1));
         wedge.close();
         let strength = (1.0 - t0).powf(2.2) * if f.scanning { 0.16 } else { 0.07 };
-        canvas.draw_path(&wedge.detach(), &fill(theme::AMBER, strength));
+        canvas.draw_path(&wedge.detach(), &fill(theme::amber(), strength));
     }
     let (bx, by) = f.dial.at(beam, OUTER_R);
-    canvas.draw_line((cx, cy), (bx, by), &stroke(theme::AMBER, 0.55, 1.2));
-    canvas.draw_circle((bx, by), 2.2, &fill(theme::AMBER, 0.9));
-    canvas.draw_circle((bx, by), 7.0, &glow(theme::AMBER, 0.5, 5.0));
+    canvas.draw_line((cx, cy), (bx, by), &stroke(theme::amber(), 0.55, 1.2));
+    canvas.draw_circle((bx, by), 2.2, &fill(theme::amber(), 0.9));
+    canvas.draw_circle((bx, by), 7.0, &glow(theme::amber(), 0.5, 5.0));
 
     // Husks, heaviest first so small ones stay visible on top.
     let total = f.nodes.len().max(1) as f32;
@@ -244,7 +248,7 @@ fn draw(canvas: &SkCanvas, w: f32, h: f32, f: &Frame<'_>) {
             canvas.draw_circle(
                 (x, y),
                 size * (1.3 + p * 1.8),
-                &stroke(theme::OXBLOOD, (1.0 - p) * 0.8 * ease, 1.4),
+                &stroke(theme::oxblood(), (1.0 - p) * 0.8 * ease, 1.4),
             );
         }
 
@@ -254,7 +258,7 @@ fn draw(canvas: &SkCanvas, w: f32, h: f32, f: &Frame<'_>) {
         canvas.draw_circle(
             (x, y),
             r,
-            &fill(theme::mix(theme::PITCH, color, 0.28), ease),
+            &fill(theme::mix(theme::pitch(), color, 0.28), ease),
         );
         canvas.draw_circle((x, y), r, &stroke(color, base * ease, 1.2));
         if r > 7.0 {
@@ -263,19 +267,23 @@ fn draw(canvas: &SkCanvas, w: f32, h: f32, f: &Frame<'_>) {
         canvas.draw_circle(
             (x, y),
             (r * 0.26).clamp(1.3, 3.2),
-            &fill(theme::mix(color, theme::BONE, 0.25), base * ease),
+            &fill(theme::mix(color, theme::bone(), 0.25), base * ease),
         );
 
         if node.marked {
-            canvas.draw_circle((x, y), size + 5.0, &stroke(theme::COPPER, 0.95 * ease, 1.6));
+            canvas.draw_circle(
+                (x, y),
+                size + 5.0,
+                &stroke(theme::copper(), 0.95 * ease, 1.6),
+            );
             canvas.draw_circle(
                 (x + size * 0.8, y - size * 0.8),
                 2.4,
-                &fill(theme::COPPER, ease),
+                &fill(theme::copper(), ease),
             );
         }
         if node.selected || hovered {
-            let ring = stroke(theme::BONE, if node.selected { 0.9 } else { 0.5 }, 1.0);
+            let ring = stroke(theme::bone(), if node.selected { 0.9 } else { 0.5 }, 1.0);
             canvas.draw_circle((x, y), size + 9.0, &ring);
             for a in [0.0f32, FRAC_PI_2, FRAC_PI_2 * 2.0, FRAC_PI_2 * 3.0] {
                 let (dx, dy) = (a.cos(), a.sin());
@@ -289,18 +297,18 @@ fn draw(canvas: &SkCanvas, w: f32, h: f32, f: &Frame<'_>) {
     }
 
     // The machine at the core.
-    canvas.draw_circle((cx, cy), r * INNER_R * 0.55, &fill(theme::PITCH, 1.0));
+    canvas.draw_circle((cx, cy), r * INNER_R * 0.55, &fill(theme::pitch(), 1.0));
     canvas.draw_circle(
         (cx, cy),
         r * INNER_R * 0.55,
-        &stroke(theme::HAIRLINE, 1.0, 1.0),
+        &stroke(theme::hairline(), 1.0, 1.0),
     );
-    canvas.draw_circle((cx, cy), 4.0, &fill(theme::COPPER, 1.0));
-    canvas.draw_circle((cx, cy), 10.0, &glow(theme::COPPER, 0.5, 6.0));
+    canvas.draw_circle((cx, cy), 4.0, &fill(theme::copper(), 1.0));
+    canvas.draw_circle((cx, cy), 10.0, &glow(theme::copper(), 0.5, 6.0));
     canvas.draw_circle(
         (cx, cy),
         r * INNER_R * (0.55 + f.beat * 0.25),
-        &stroke(theme::COPPER, (1.0 - f.beat) * 0.35, 1.0),
+        &stroke(theme::copper(), (1.0 - f.beat) * 0.35, 1.0),
     );
 }
 
@@ -433,9 +441,9 @@ impl Component for HuskMap {
             let lw = 190.0;
             let (x, y, right) = label_anchor(&dial, sec.mid(), OUTER_R + 0.16, lw);
             let color = if label.active {
-                theme::BONE
+                theme::bone()
             } else {
-                theme::DUST
+                theme::dust()
             };
             layer = layer.child(
                 rect()
@@ -454,16 +462,16 @@ impl Component for HuskMap {
                             .horizontal()
                             .spacing(7.)
                             .cross_align(Alignment::Center)
-                            .child(glyph(Glyph::for_kind(sec.kind), theme::COPPER, 13.))
+                            .child(glyph(Glyph::for_kind(sec.kind), theme::copper(), 13.))
                             .child(caps(&label.label, color)),
                     )
                     .child(mono(
                         format!("{} · {}", label.bytes, label.count),
                         theme::TEXT_SM,
                         if label.active {
-                            theme::ASH
+                            theme::ash()
                         } else {
-                            theme::DUST
+                            theme::dust()
                         },
                     )),
             );
@@ -476,7 +484,7 @@ impl Component for HuskMap {
                 rect()
                     .content(Content::flex())
                     .position(Position::new_absolute().left(x + 4.0).top(y - 7.0))
-                    .child(mono(name, 9.5, theme::DUST)),
+                    .child(mono(name, 9.5, theme::dust())),
             );
         }
 
@@ -536,7 +544,11 @@ impl Component for HuskMap {
                         mono(
                             node.name.clone(),
                             theme::TEXT_SM,
-                            if emphasis { theme::BONE } else { theme::ASH },
+                            if emphasis {
+                                theme::bone()
+                            } else {
+                                theme::ash()
+                            },
                         )
                         .max_lines(1)
                         .text_overflow(TextOverflow::Ellipsis),
@@ -626,7 +638,7 @@ pub fn tone_legend() -> Rect {
                     .height(Size::px(11.))
                     .corner_radius(6.)
                     .center()
-                    .background(theme::mix(theme::PITCH, theme::tone_color(tone), 0.3))
+                    .background(theme::mix(theme::pitch(), theme::tone_color(tone), 0.3))
                     .border(
                         Border::new()
                             .fill(theme::tone_color(tone))
@@ -641,7 +653,7 @@ pub fn tone_legend() -> Rect {
                             .background(theme::tone_color(tone)),
                     ),
             )
-            .child(mono(text.to_string(), theme::TEXT_XS, theme::ASH))
+            .child(mono(text.to_string(), theme::TEXT_XS, theme::ash()))
     };
     rect()
         .content(Content::flex())
