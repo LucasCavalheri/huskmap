@@ -1,8 +1,7 @@
 ---
 import "../styles/global.css";
-import Dial from "./Dial.astro";
 import Icon from "./Icon.astro";
-import { AGENTS, TOOLS } from "../lib/icons";
+import { AGENTS } from "../lib/icons";
 import { dictionaries, localePath, otherLocale, type Locale } from "../i18n";
 
 interface Props {
@@ -10,41 +9,34 @@ interface Props {
 }
 const { locale } = Astro.props;
 const t = dictionaries[locale];
-const tag = locale === "en" ? "en" : "pt";
+const lang = locale === "en" ? "en" : "pt";
+const other = dictionaries[otherLocale(locale)];
 
 const REPO = "https://github.com/LucasCavalheri/huskmap";
 const INSTALL = "curl -fsSL https://raw.githubusercontent.com/LucasCavalheri/huskmap/main/install.sh | bash";
 const abs = (path: string) => new URL(path, Astro.site).href;
 const canonical = abs(localePath(locale));
 
-const kindColor: Record<string, string> = {
-  worktree: "#c97c45",
-  ballast: "#6ca486",
-  toolchain: "#e8ae48",
-  afterimage: "#a88fc4",
-  cache: "#7fa2b8",
-  debris: "#9a9386",
-};
-const toneColor: Record<string, string> = {
-  free: "var(--verdigris)",
-  caution: "var(--amber)",
-  guarded: "var(--copper)",
-  blocked: "var(--oxblood)",
-};
-const sliceLabels = t.finds.items.map((i) => i.name);
-const frames = ["map", "list", "drawer", "confirm", "guide"] as const;
-const shot = (name: string) => ({
-  src: `/shots/${name}-${tag}-1480.webp`,
-  srcset: `/shots/${name}-${tag}-1480.webp 1480w, /shots/${name}-${tag}-2960.webp 2960w`,
+const shot = (shade: "dark" | "light") => ({
+  src: `/shots/map-${lang}-${shade}-1480.webp`,
+  srcset: `/shots/map-${lang}-${shade}-1480.webp 1480w, /shots/map-${lang}-${shade}-2960.webp 2960w`,
 });
-// A mini dial per type, with its slice lit.
-const miniSlice = (i: number) => {
-  const a0 = ((i * 60 - 90) * Math.PI) / 180;
-  const a1 = (((i + 1) * 60 - 90) * Math.PI) / 180;
-  const p = (a: number) => `${(30 + 28 * Math.cos(a)).toFixed(2)} ${(30 + 28 * Math.sin(a)).toFixed(2)}`;
-  return `M30 30 L${p(a0)} A28 28 0 0 1 ${p(a1)} Z`;
+
+// A few quiet blips for the background sonar: [angle°, radius 0..1, tone]
+const blips: [number, number, string][] = [
+  [28, 0.62, "moss"],
+  [74, 0.84, "moss"],
+  [118, 0.46, "rust"],
+  [161, 0.9, "moss"],
+  [212, 0.7, "amber"],
+  [256, 0.38, "moss"],
+  [301, 0.78, "rust"],
+  [338, 0.55, "amber"],
+];
+const at = (deg: number, r: number) => {
+  const a = (deg * Math.PI) / 180;
+  return { x: +(500 * r * Math.sin(a)).toFixed(1), y: +(-500 * r * Math.cos(a)).toFixed(1) };
 };
-const marquee = [...AGENTS, ...TOOLS];
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -61,15 +53,6 @@ const jsonLd = {
   codeRepository: REPO,
   inLanguage: t.htmlLang,
 };
-const faqLd = {
-  "@context": "https://schema.org",
-  "@type": "FAQPage",
-  mainEntity: t.faq.items.map((f) => ({
-    "@type": "Question",
-    name: f.q,
-    acceptedAnswer: { "@type": "Answer", text: f.a },
-  })),
-};
 ---
 
 <!doctype html>
@@ -79,7 +62,7 @@ const faqLd = {
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{t.meta.title}</title>
     <meta name="description" content={t.meta.description} />
-    <meta name="theme-color" content="#070706" />
+    <meta name="theme-color" content="#f6f3ec" />
     <link rel="canonical" href={canonical} />
     <link rel="alternate" hreflang="en" href={abs(localePath("en"))} />
     <link rel="alternate" hreflang="pt-BR" href={abs(localePath("pt-BR"))} />
@@ -101,9 +84,7 @@ const faqLd = {
     <link rel="icon" type="image/png" sizes="32x32" href="/icon-32.png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="preload" href="/fonts/InstrumentSerif-Regular.woff2" as="font" type="font/woff2" crossorigin />
-    <link rel="preload" href="/fonts/IBMPlexMono-Regular.woff2" as="font" type="font/woff2" crossorigin />
     <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
-    <script type="application/ld+json" set:html={JSON.stringify(faqLd)} />
     <script is:inline>document.documentElement.classList.add("js");</script>
   </head>
   <body>
@@ -112,315 +93,108 @@ const faqLd = {
     <header class="top" data-top>
       <div class="wrap">
         <a class="brand" href={localePath(locale)} aria-label={t.nav.home}>
-          <img src="/icon.svg" alt="" width="30" height="30" />
+          <img src="/icon.svg" alt="" width="26" height="26" />
           huskmap
         </a>
         <nav class="links" aria-label={t.nav.label}>
-          <a href="#finds">{t.nav.finds}</a>
-          <a href="#safety">{t.nav.safety}</a>
-          <a href="#how">{t.nav.how}</a>
           <a href={REPO}>{t.nav.github}</a>
-          <a class="lang" href={localePath(otherLocale(locale))} hreflang={dictionaries[otherLocale(locale)].htmlLang} aria-label={`${dictionaries[otherLocale(locale)].short} · ${t.nav.other}`}>
-            {dictionaries[otherLocale(locale)].short}
-          </a>
-          <a class="btn solid" href="#install" aria-label={t.nav.install}><Icon name="arrow-right" /> <span>{t.nav.install}</span></a>
+          <a href={localePath(otherLocale(locale))} hreflang={other.htmlLang} aria-label={`${other.short} · ${t.nav.other}`}>{other.short}</a>
+          <a class="btn" href="#install">{t.nav.install}</a>
         </nav>
       </div>
     </header>
 
     <main id="main">
       <section class="hero">
-        <div class="wrap hero-grid">
-          <div>
-            <span class="kicker"><b>00</b> {t.hero.eyebrow}</span>
-            <h1 class="display">
-              <span class="line"><span>{t.hero.titleA}</span></span>
-              <span class="line"><span>{t.hero.titleB}</span></span>
-              <span class="line"><span class="accent">{t.hero.titleC}</span></span>
-            </h1>
-            <p class="lead">{t.hero.lead}</p>
-            <div class="hero-actions">
-              <div class="cmd">
-                <span class="prompt">$</span>
-                <code>{INSTALL}</code>
-                <button class="copy" type="button" data-copy={INSTALL} data-done={t.hero.copied}>{t.hero.copy}</button>
-              </div>
-              <a class="btn" href={REPO}><Icon name="grove" /> {t.hero.github}</a>
+        <svg class="sonar" viewBox="-520 -520 1040 1040" aria-hidden="true">
+          {[0.25, 0.5, 0.75, 1].map((r) => <circle r={500 * r} />)}
+          <line x1="-500" y1="0" x2="500" y2="0" />
+          <line x1="0" y1="-500" x2="0" y2="500" />
+          <g class="beam"><path d="M0 0 L0 -500 A500 500 0 0 0 -104 -489 Z" /></g>
+          {blips.map(([deg, r, tone]) => {
+            const p = at(deg, r);
+            return <circle class={`blip ${tone}`} cx={p.x} cy={p.y} r="5" style={`--d:${(deg / 360) * 10}s`} />;
+          })}
+        </svg>
+        <div class="wrap hero-inner">
+          <span class="pill rise" style="--d:0s">{t.hero.eyebrow}</span>
+          <h1 class="display rise" style="--d:.08s">
+            {t.hero.titleA}<br /><em>{t.hero.titleB}</em>
+          </h1>
+          <p class="lead rise" style="--d:.2s">{t.hero.lead}</p>
+          <div class="actions rise" style="--d:.32s">
+            <div class="cmd">
+              <code><span class="prompt">$</span> {INSTALL}</code>
+              <button class="copy" type="button" data-copy={INSTALL} data-done={t.hero.copied}>{t.hero.copy}</button>
             </div>
-            <p class="hero-note"><Icon name="mark" /> {t.hero.note}</p>
-          </div>
-          <div class="hero-dial">
-            <Dial labels={sliceLabels} ariaLabel={t.hero.dialLabel} />
-            <div class="readout" aria-hidden="true">
-              {t.hero.tones.map((tone, i) => (
-                <span style={`--c:${["var(--verdigris)", "var(--amber)", "var(--copper)", "var(--oxblood)"][i]}`}>{tone}</span>
-              ))}
-            </div>
+            <a class="text-link" href={REPO}>{t.hero.github} →</a>
           </div>
         </div>
-        <span class="scroll-cue" aria-hidden="true"></span>
       </section>
 
-      <div class="wrap">
-        <div class="proof">
-          {t.proof.map((p, i) => (
-            <div class="reveal" style={`--delay:${i * 0.1}s`}>
-              <strong data-count={p.value}>{p.value}</strong>
-              <span>{p.label}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div class="marquee" aria-label={t.finds.agentsTitle}>
-        <div class="marquee-track">
-          {[0, 1].map((copy) =>
-            marquee.map((m) => (
-              <span class="marquee-item" aria-hidden={copy === 1 ? "true" : undefined}>
-                <Icon name={m.mark} brand={m.name} />
-                {m.name}
-                <span class="marquee-sep">·</span>
-              </span>
-            )),
-          )}
-        </div>
-      </div>
-
-      <section class="band" id="app">
+      <section class="product">
         <div class="wrap">
-          <div class="head">
-            <div class="reveal">
-              <span class="kicker"><b>01</b> {t.showcase.eyebrow}</span>
-              <h2 class="display">{t.showcase.title}</h2>
+          <figure class="compare-wrap reveal">
+            <div class="compare" data-compare>
+              <img {...shot("dark")} sizes="(max-width: 1120px) 100vw, 1080px" width="1480" height="920" alt={t.compare.alt.dark} fetchpriority="high" decoding="async" />
+              <img class="light-shot" {...shot("light")} sizes="(max-width: 1120px) 100vw, 1080px" width="1480" height="920" alt={t.compare.alt.light} decoding="async" />
+              <span class="handle" aria-hidden="true"></span>
+              <input type="range" min="0" max="100" value="50" aria-label={t.compare.drag} />
             </div>
-            <p class="lead reveal" style="--delay:.1s">{t.showcase.lead}</p>
-          </div>
-          <div class="showcase">
-            {frames.map((f, i) => <input type="radio" name="frame" id={`f-${f}`} checked={i === 0} />)}
-            <div class="tabs" role="presentation">
-              {frames.map((f) => <label for={`f-${f}`}>{t.showcase.tabs[f]}</label>)}
-            </div>
-            <div class="window">
-              <div class="window-bar">huskmap<i><b></b><b></b><b></b></i></div>
-              <div class="frames">
-                {frames.map((f, i) => (
-                  <img
-                    data-f={f}
-                    {...shot(f)}
-                    sizes="(max-width: 1300px) 100vw, 1240px"
-                    width="1480"
-                    height="920"
-                    alt={t.showcase.alt[f]}
-                    loading={i === 0 ? "eager" : "lazy"}
-                    decoding="async"
-                  />
-                ))}
-              </div>
-            </div>
-            <div class="captions">
-              {frames.map((f) => <p data-f={f}>{t.showcase.captions[f]}</p>)}
-            </div>
-          </div>
+            <figcaption>
+              <span>{t.compare.dark}</span>
+              {t.compare.caption}
+              <span>{t.compare.light}</span>
+            </figcaption>
+          </figure>
         </div>
       </section>
 
-      <section class="band" id="finds">
+      <section class="points">
         <div class="wrap">
-          <div class="head">
-            <div class="reveal">
-              <span class="kicker"><b>02</b> {t.finds.eyebrow}</span>
-              <h2 class="display">{t.finds.title}</h2>
-            </div>
-            <p class="lead reveal" style="--delay:.1s">{t.finds.lead}</p>
-          </div>
-          <div class="finds">
-            {t.finds.items.map((item, i) => (
-              <article class="find reveal" style={`--k:${kindColor[item.kind]};--delay:${(i % 3) * 0.08}s`}>
-                <div class="find-top">
-                  <Icon name={item.kind} />
-                  <svg class="mini" viewBox="0 0 60 60" aria-hidden="true">
-                    <circle cx="30" cy="30" r="28" fill="none" stroke="#2c2822" />
-                    {[0, 1, 2, 3, 4, 5].map((k) => (
-                      <path d={miniSlice(k)} fill={k === i ? "currentColor" : "none"} fill-opacity={k === i ? 0.35 : 0} stroke="#2c2822" />
-                    ))}
-                    <circle cx="30" cy="30" r="4" fill="#070706" stroke="currentColor" />
-                  </svg>
-                </div>
-                <h3>{item.name}</h3>
-                <p>{item.body}</p>
-                <div class="tags">{item.tags.map((x) => <span>{x}</span>)}</div>
-                <span class="n">0{i + 1}</span>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section class="band" id="safety">
-        <div class="wrap safety-grid">
-          <div>
-            <div class="reveal">
-              <span class="kicker"><b>03</b> {t.safety.eyebrow}</span>
-              <h2 class="display" style="font-size:clamp(2.6rem,5vw,4.8rem);margin:22px 0 22px">{t.safety.title}</h2>
-              <p class="lead">{t.safety.lead}</p>
-            </div>
-            <ul class="rules">
-              {t.safety.rules.map((r, i) => (
-                <li class="reveal" style={`--t:${toneColor[r.tone]};--delay:${i * 0.07}s`}>
-                  <i></i>
-                  <strong>{r.name}</strong>
-                  <p>{r.body}</p>
-                </li>
-              ))}
-            </ul>
-            <p class="promise reveal">{t.safety.promise}</p>
-          </div>
-          <div class="drawer-shot reveal" style="--delay:.15s">
-            <div class="window">
-              <div class="window-bar">huskmap<i><b></b><b></b><b></b></i></div>
-              <img
-                {...shot("drawer")}
-                sizes="(max-width: 980px) 100vw, 680px"
-                width="1480"
-                height="920"
-                alt={t.showcase.alt.drawer}
-                loading="lazy"
-                decoding="async"
-              />
-            </div>
-            <span class="ping">claude · pid 4242</span>
-          </div>
-        </div>
-      </section>
-
-      <section class="band" id="how">
-        <div class="wrap">
-          <div class="head">
-            <div class="reveal">
-              <span class="kicker"><b>04</b> {t.how.eyebrow}</span>
-              <h2 class="display">{t.how.title}</h2>
-            </div>
-          </div>
-          <ol class="steps" data-steps>
-            {t.how.steps.map((s, i) => (
-              <li class="reveal" style={`--delay:${i * 0.12}s`}>
-                <h3>{s.name}</h3>
-                <p>{s.body}</p>
+          <ul>
+            {t.points.map((p, i) => (
+              <li class="reveal" style={`--delay:${i * 0.08}s`}>
+                <Icon name={p.icon} />
+                <h2>{p.name}</h2>
+                <p>{p.body}</p>
               </li>
             ))}
-          </ol>
+          </ul>
         </div>
       </section>
 
-      <section class="band" id="filters">
-        <div class="wrap split">
-          <div class="reveal">
-            <span class="kicker"><b>05</b> {t.filters.eyebrow}</span>
-            <h2 class="display">{t.filters.title}</h2>
-            <p class="lead">{t.filters.lead}</p>
-          </div>
-          <div class="reveal" style="--delay:.1s">
-            <div class="search" aria-hidden="true">
-              <Icon name="search" />
-              <output data-typer={JSON.stringify(t.filters.examples.map((e) => e.q))}>{t.filters.examples[0].q}</output>
-            </div>
-            <ul class="queries" data-queries>
-              {t.filters.examples.map((e, i) => (
-                <li class:list={[{ on: i === 0 }]}><code>{e.q}</code><span>{e.note}</span></li>
-              ))}
-            </ul>
-          </div>
+      <section class="agents reveal" aria-label={t.agents}>
+        <p>{t.agents}</p>
+        <div class="marks">
+          {AGENTS.map((m) => <Icon name={m.mark} brand={m.name} />)}
         </div>
       </section>
 
-      <section class="band" id="cli">
-        <div class="wrap split">
-          <div class="term reveal">
-            <div class="term-bar">~ · huskmap scan</div>
-            <pre><span class="c">$</span> <span class="b">huskmap scan</span>
-<span class="b">huskmap</span>  <span class="d">{locale === "en" ? "what AI agents left on your disk" : "o que os agentes de IA deixaram no disco"}</span>
-<span class="b">27.4 GB</span> {locale === "en" ? "can be freed  of 28.6 GB found · 44 items" : "dá para liberar  de 28.6 GB encontrados · 44 itens"}
-
-  <span class="r">{locale === "en" ? "IN USE OR UNSAVED WORK" : "EM USO OU COM TRABALHO NÃO SALVO"}</span>
-  <span class="r">■</span>   894.0 MB    0m  ~/dev/app-worktrees/feat-husk-map
-                     <span class="r">↳ claude · pid 4242 {locale === "en" ? "is using this folder now" : "está usando esta pasta agora"}</span>
-  <span class="a">◐</span>    42.0 MB    3d  ~/.codex/worktrees/a1b2/api
-                     <span class="a">↳ 3 commits {locale === "en" ? "exist only here" : "só existem aqui"}</span>
-
-  <span class="b">{locale === "en" ? "DEPENDENCIES" : "DEPENDÊNCIAS"}</span>  9 · 9.8 GB
-  <span class="g">●</span>     6.2 GB    0m  ~/dev/huskmap/target
-  <span class="g">●</span>   900.0 MB   5w  ~/dev/ml/.venv
-<span class="c">$</span> <span class="b">_</span></pre>
-          </div>
-          <div class="reveal" style="--delay:.1s">
-            <span class="kicker"><b>06</b> {t.cli.eyebrow}</span>
-            <h2 class="display">{t.cli.title}</h2>
-            <p class="lead">{t.cli.lead}</p>
-            <ul class="cmds">
-              {t.cli.commands.map((c) => (
-                <li><code>{c.cmd}</code><span>{c.note}</span></li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      </section>
-
-      <section class="band install" id="install">
-        <div class="wrap">
-          <span class="kicker reveal"><b>07</b> {t.install.eyebrow}</span>
-          <h2 class="display reveal">{t.install.title}</h2>
-          <p class="lead reveal">{t.install.lead}</p>
-          <div class="cmd reveal">
-            <span class="prompt">$</span>
-            <code>{INSTALL}</code>
+      <section class="install" id="install">
+        <div class="wrap reveal">
+          <h2 class="display">{t.install.title}</h2>
+          <div class="cmd">
+            <code><span class="prompt">$</span> {INSTALL}</code>
             <button class="copy" type="button" data-copy={INSTALL} data-done={t.hero.copied}>{t.hero.copy}</button>
           </div>
-          <div class="formats reveal">
-            {t.install.formats.map((f) => (
-              <a href={`${REPO}/releases/latest`}>
-                <strong>{f.ext}</strong>
-                <span>{f.distros}</span>
-              </a>
-            ))}
-          </div>
-          <p class="install-foot">
-            {t.install.user} · <a href={`${REPO}/releases`}>{t.install.releases}</a>
+          <p>
+            {t.install.note} <a href={`${REPO}/releases/latest`}>{t.install.releases}</a>
           </p>
-        </div>
-      </section>
-
-      <section class="band" id="faq">
-        <div class="wrap">
-          <div class="head">
-            <div class="reveal">
-              <span class="kicker"><b>08</b> {t.faq.eyebrow}</span>
-              <h2 class="display">{t.faq.title}</h2>
-            </div>
-          </div>
-          <div class="faq">
-            {t.faq.items.map((f, i) => (
-              <details class="reveal" open={i === 0}>
-                <summary>{f.q}</summary>
-                <p>{f.a}</p>
-              </details>
-            ))}
-          </div>
         </div>
       </section>
     </main>
 
     <footer class="foot">
       <div class="wrap">
-        <p class="tag">{t.footer.tagline}</p>
+        <span class="brand small"><img src="/icon.svg" alt="" width="18" height="18" /> huskmap</span>
         <nav aria-label="Footer">
           <a href={REPO}>GitHub</a>
           <a href={`${REPO}/releases`}>{t.footer.releases}</a>
-          <a href={`${REPO}/issues`}>{t.footer.issues}</a>
           <a href={`${REPO}/blob/main/LICENSE`}>{t.footer.license}</a>
-          <a href={localePath(otherLocale(locale))} hreflang={dictionaries[otherLocale(locale)].htmlLang}>{t.nav.other}</a>
+          <a href={localePath(otherLocale(locale))} hreflang={other.htmlLang}>{t.nav.other}</a>
         </nav>
         <small>{t.footer.marks}</small>
-        <span class="wordmark" aria-hidden="true">huskmap</span>
       </div>
     </footer>
 
@@ -428,17 +202,29 @@ const faqLd = {
       (() => {
         const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
         const top = document.querySelector("[data-top]");
-        const onScroll = () => top && top.classList.toggle("scrolled", scrollY > 24);
+        const onScroll = () => top && top.classList.toggle("scrolled", scrollY > 16);
         addEventListener("scroll", onScroll, { passive: true });
         onScroll();
 
-        const count = (el) => {
-          const target = parseFloat(el.dataset.count);
-          if (!isFinite(target) || still) return;
+        const compare = document.querySelector("[data-compare]");
+        const range = compare && compare.querySelector("input");
+        const set = (v) => compare.style.setProperty("--split", v + "%");
+        let touched = false;
+        range &&
+          range.addEventListener("input", () => {
+            touched = true;
+            set(range.value);
+          });
+        // First look: the split glides once so both themes show themselves.
+        const glide = () => {
+          if (still || touched) return;
           const t0 = performance.now();
           const tick = (now) => {
-            const k = Math.min(1, (now - t0) / 1400);
-            el.textContent = String(Math.round(target * (1 - Math.pow(1 - k, 3))));
+            if (touched) return;
+            const k = Math.min(1, (now - t0) / 2400);
+            const v = 50 + 30 * Math.sin(k * Math.PI * 2) * (1 - k);
+            set(v.toFixed(2));
+            range.value = String(Math.round(v));
             if (k < 1) requestAnimationFrame(tick);
           };
           requestAnimationFrame(tick);
@@ -449,13 +235,13 @@ const faqLd = {
             for (const e of entries) {
               if (!e.isIntersecting) continue;
               e.target.classList.add("in");
-              e.target.querySelectorAll("[data-count]").forEach(count);
+              if (e.target.contains(compare)) setTimeout(glide, 450);
               io.unobserve(e.target);
             }
           },
-          { rootMargin: "0px 0px -8% 0px" },
+          { rootMargin: "0px 0px -10% 0px" },
         );
-        document.querySelectorAll(".reveal, [data-steps]").forEach((el) => io.observe(el));
+        document.querySelectorAll(".reveal").forEach((el) => io.observe(el));
 
         document.querySelectorAll("[data-copy]").forEach((btn) => {
           const idle = btn.textContent;
@@ -467,78 +253,11 @@ const faqLd = {
               setTimeout(() => {
                 btn.textContent = idle;
                 btn.classList.remove("done");
-              }, 2000);
+              }, 1800);
             } catch {}
           });
         });
-
-        const out = document.querySelector("[data-typer]");
-        const rows = document.querySelectorAll("[data-queries] li");
-        if (out && !still) {
-          const qs = JSON.parse(out.dataset.typer);
-          let i = 0;
-          const wait = (ms) => new Promise((r) => setTimeout(r, ms));
-          (async function loop() {
-            for (;;) {
-              rows.forEach((r, k) => r.classList.toggle("on", k === i));
-              const q = qs[i];
-              for (let n = 0; n <= q.length; n++) {
-                out.textContent = q.slice(0, n);
-                await wait(38 + Math.random() * 40);
-              }
-              await wait(2200);
-              for (let n = q.length; n >= 0; n--) {
-                out.textContent = q.slice(0, n);
-                await wait(14);
-              }
-              i = (i + 1) % qs.length;
-              await wait(300);
-            }
-          })();
-        }
       })();
     </script>
   </body>
 </html>
-
-<style>
-  #f-map:checked ~ .window img[data-f="map"],
-  #f-list:checked ~ .window img[data-f="list"],
-  #f-drawer:checked ~ .window img[data-f="drawer"],
-  #f-confirm:checked ~ .window img[data-f="confirm"],
-  #f-guide:checked ~ .window img[data-f="guide"] {
-    opacity: 1;
-    transform: none;
-  }
-  #f-map:checked ~ .captions p[data-f="map"],
-  #f-list:checked ~ .captions p[data-f="list"],
-  #f-drawer:checked ~ .captions p[data-f="drawer"],
-  #f-confirm:checked ~ .captions p[data-f="confirm"],
-  #f-guide:checked ~ .captions p[data-f="guide"] {
-    display: block;
-  }
-  #f-map:checked ~ .tabs label[for="f-map"],
-  #f-list:checked ~ .tabs label[for="f-list"],
-  #f-drawer:checked ~ .tabs label[for="f-drawer"],
-  #f-confirm:checked ~ .tabs label[for="f-confirm"],
-  #f-guide:checked ~ .tabs label[for="f-guide"] {
-    color: var(--pitch);
-    background: var(--copper);
-  }
-  .showcase > input:focus-visible ~ .tabs {
-    outline: 1px solid var(--copper);
-    outline-offset: 3px;
-  }
-  .showcase > input {
-    position: absolute;
-    opacity: 0;
-    pointer-events: none;
-  }
-  .drawer-shot img {
-    width: 100%;
-  }
-  .split .display {
-    font-size: clamp(2.4rem, 4.6vw, 4.4rem);
-    margin: 22px 0 22px;
-  }
-</style>
