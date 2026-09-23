@@ -335,6 +335,24 @@ impl App for HuskmapApp {
             });
         }
 
+        // Remember the theme pick.
+        {
+            let config = dirs.config.clone();
+            let last: Rc<RefCell<Option<crate::theme::ThemeChoice>>> =
+                use_hook(|| Rc::new(RefCell::new(None)));
+            use_side_effect(move || {
+                let theme = state.read().theme;
+                let before = last.borrow_mut().replace(theme);
+                if live
+                    && before.is_some_and(|b| b != theme)
+                    && let Err(err) =
+                        Settings::update(&config, |s| s.theme = Some(theme.as_str().into()))
+                {
+                    tracing::warn!(error = %err, "could not remember the theme");
+                }
+            });
+        }
+
         // Buttons ask; the shell does.
         {
             let dirs = dirs.clone();
@@ -368,6 +386,11 @@ impl App for HuskmapApp {
                 }
             }
         };
+
+        // Resolve the palette before anything reads a color. System follows the desktop.
+        let system_light = *Platform::get().preferred_theme.read() == PreferredTheme::Light;
+        let light = state.read().theme.is_light(system_light);
+        theme::set_light(light);
 
         let s = state.read();
         let mode = s.mode;
@@ -448,9 +471,11 @@ impl App for HuskmapApp {
         stage = stage.child(content);
 
         let mut root = rect()
+            // A new key on a theme switch redraws every memoized component in the new colors.
+            .key(if light { "light" } else { "dark" })
             .content(Content::flex())
             .expanded()
-            .background(theme::PITCH)
+            .background(theme::pitch())
             .on_global_key_down(on_key)
             .child(
                 rect()
@@ -495,7 +520,13 @@ pub fn initial_state(dirs: &Dirs) -> AppState {
         state.restore(&previous);
     }
     state.request = Some(Intent::Scan);
-    state.guide_open = !Settings::load(&dirs.config).guide_seen;
+    let settings = Settings::load(&dirs.config);
+    state.guide_open = !settings.guide_seen;
+    state.theme = settings
+        .theme
+        .as_deref()
+        .map(crate::theme::ThemeChoice::parse)
+        .unwrap_or_default();
     state
 }
 
@@ -532,9 +563,9 @@ pub fn launch_app() {
                     f64::from(theme::WINDOW_MIN_HEIGHT),
                 )
                 .with_background(Color::from_rgb(
-                    theme::PITCH.0,
-                    theme::PITCH.1,
-                    theme::PITCH.2,
+                    theme::pitch().0,
+                    theme::pitch().1,
+                    theme::pitch().2,
                 )),
         ),
     );
@@ -610,6 +641,8 @@ mod tests {
         );
         Settings::update(&dirs.config, |s| s.guide_seen = true).unwrap();
         assert!(!initial_state(&dirs).guide_open);
+        Settings::update(&dirs.config, |s| s.theme = Some("light".into())).unwrap();
+        assert_eq!(initial_state(&dirs).theme, crate::theme::ThemeChoice::Light);
         huskmap_core::ScanReport::empty(tmp.path().to_path_buf(), 1)
             .save(&dirs.last_report())
             .unwrap();
