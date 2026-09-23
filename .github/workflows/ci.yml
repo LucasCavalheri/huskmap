@@ -1,0 +1,142 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  # Tests never phone GitHub.
+  HUSKMAP_NO_UPDATE_CHECK: "1"
+
+jobs:
+  quality:
+    name: quality
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      - name: Install Freya/Skia build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang libfontconfig-dev libfreetype-dev libegl-dev libgl-dev libx11-dev libxkbcommon-dev libwayland-dev desktop-file-utils shellcheck
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+      - name: Clippy
+        run: cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
+      - name: Shellcheck
+        run: shellcheck -S warning install.sh packaging/*.sh scripts/*.sh
+      - name: Desktop entry
+        run: desktop-file-validate packaging/lucas.cavalheri.huskmap.desktop
+      - name: install.sh flow
+        run: bash scripts/install.test.sh
+      - name: Release tools
+        run: bash scripts/release-tools.test.sh
+
+  test:
+    name: test (${{ matrix.target }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            target: x86_64-unknown-linux-gnu
+            arch: amd64
+          - os: ubuntu-24.04-arm
+            target: aarch64-unknown-linux-gnu
+            arch: arm64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
+        with:
+          targets: ${{ matrix.target }}
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      - name: Install build and packaging dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang libfontconfig-dev libfreetype-dev libegl-dev libgl-dev libx11-dev libxkbcommon-dev libwayland-dev dpkg-dev rpm zstd desktop-file-utils
+      - name: Tests (core, CLI, GUI view model and headless frames)
+        run: cargo test --workspace --all-features --locked --target "${{ matrix.target }}"
+      - name: Build release binary
+        run: cargo build --release --locked --target "${{ matrix.target }}" -p huskmap-cli
+      - name: Smoke the shipped binary
+        run: |
+          set -euo pipefail
+          bin="target/${{ matrix.target }}/release/huskmap"
+          home="$(mktemp -d)"
+          "$bin" --version
+          HUSKMAP_HOME="$home" "$bin" doctor --json > /dev/null
+          HUSKMAP_HOME="$home" "$bin" scan --json > /dev/null
+          HUSKMAP_HOME="$home" "$bin" status | grep -qx 'applying=0'
+      - name: Packages
+        run: bash scripts/package.test.sh "target/${{ matrix.target }}/release/huskmap" "${{ matrix.arch }}"
+      - name: Upload frames
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: frames-${{ matrix.arch }}
+          path: target/tmp/snapshots/*.png
+          if-no-files-found: ignore
+
+  coverage:
+    name: coverage (huskmap-core)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
+        with:
+          components: llvm-tools-preview
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      - name: Install cargo-llvm-cov
+        run: cargo install cargo-llvm-cov --locked
+      - name: Coverage gate (AGENTS.md floor)
+        run: cargo llvm-cov --package huskmap-core --locked --fail-under-lines 95 --fail-under-functions 90 --summary-only
+
+  security:
+    name: security
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
+      - name: Install cargo-audit
+        run: cargo install cargo-audit --locked --version 0.22.2
+      - name: Audit Rust dependencies with RustSec
+        run: cargo audit
+      - name: Review dependencies introduced by this pull request
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
+        with:
+          fail-on-severity: low
+
+  CI:
+    name: CI
+    if: ${{ always() }}
+    needs: [quality, test, coverage, security]
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Every required job passed
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "results: $RESULTS"
+          for r in $RESULTS; do [ "$r" = success ] || exit 1; done
