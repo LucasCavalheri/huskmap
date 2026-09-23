@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # huskmap installer and updater for Linux.
 #
-#   curl -fsSL https://raw.githubusercontent.com/LucasCavalheri/huskmap/main/install.sh | bash
+#   curl -fsSL https://huskmap.lucascavalheri.com.br/install.sh | bash
 #
 # Picks the release asset for this chip and package manager, checks it against the
 # release's SHA256SUMS, and installs it. When huskmap is already open it says what is in

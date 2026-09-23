@@ -122,7 +122,7 @@ jobs:
               p { print }
             ' CHANGELOG.md
             echo
-            echo 'Install or update: `curl -fsSL https://raw.githubusercontent.com/LucasCavalheri/huskmap/main/install.sh | bash`'
+            echo 'Install or update: `curl -fsSL https://huskmap.lucascavalheri.com.br/install.sh | bash`'
           } > release-notes.md
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release upload "$TAG" dist-release/* --clobber

@@ -33,7 +33,7 @@ Claude and Grok sessions are matched to their project: a session whose project d
 ## Install
 
 ```
-curl -fsSL https://raw.githubusercontent.com/LucasCavalheri/huskmap/main/install.sh | bash
+curl -fsSL https://huskmap.lucascavalheri.com.br/install.sh | bash
 ```
 
 The script reads `uname` and the package manager, downloads the matching release asset, checks it against the release's `SHA256SUMS`, and installs it. `--user` installs the portable build into `~/.local` without root; `--print-plan` shows what it would fetch.
