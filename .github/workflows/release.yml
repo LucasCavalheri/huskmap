@@ -130,3 +130,23 @@ jobs:
           else
             gh release create "$TAG" dist-release/* --title "huskmap ${TAG}" --notes-file release-notes.md "${FLAGS[@]}"
           fi
+
+  # The download board reads the latest release at build time, so rebuild the site after
+  # every stable release. No hook configured yet means nothing to do.
+  deploy-site:
+    needs: publish
+    if: ${{ needs.publish.result == 'success' && !contains(github.ref_name, '-') }}
+    name: Rebuild the website
+    runs-on: ubuntu-24.04
+    permissions: {}
+    steps:
+      - name: Trigger the deploy hook
+        env:
+          SITE_DEPLOY_HOOK_URL: ${{ secrets.SITE_DEPLOY_HOOK_URL }}
+        run: |
+          if [ -z "$SITE_DEPLOY_HOOK_URL" ]; then
+            echo "SITE_DEPLOY_HOOK_URL is not set; skipping the website rebuild."
+            exit 0
+          fi
+          curl -fsS -X POST "$SITE_DEPLOY_HOOK_URL" >/dev/null
+          echo "website rebuild requested"

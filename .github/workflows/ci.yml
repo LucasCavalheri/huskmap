@@ -149,6 +149,8 @@ jobs:
       - name: Type-check and build the landing page
         run: npm run build
         working-directory: site
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
 
   CI:
     name: CI
