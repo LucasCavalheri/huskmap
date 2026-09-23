@@ -6,16 +6,15 @@ All notable changes to huskmap. Dates are UTC. Versions follow SemVer.
 
 First release. Linux only, every Linux.
 
-- **Husk Map**: a sonar dial of what agents left on disk. Angle is kind, radius is age, size is weight, color is what you may do. Live husks stream in while a scan runs.
-- **Worktrees are guarded**: occupied (a process works inside, read from `/proc`), uncommitted changes, commits that exist on no other ref, git locks, primary checkouts and unique secrets. Occupied ones never go, not even by force.
-- **Finds** linked worktrees and agent slots (Claude, Codex, Cursor), marker-checked ballast (`node_modules`, `target`, `.venv`, `.next`, `.turbo`, `.nuxt`, `.svelte-kit`, Python caches), package caches (npm, pnpm, yarn, bun, pip, uv, poetry, cargo, go, playwright), agent sessions (Claude and Grok matched to their project), caches and logs.
-- **Safe apply**: scan, plan, apply. Apply re-checks size, mtime, git and processes, sends husks to the freedesktop trash, then prunes worktrees from git. One apply at a time (`apply.lock`).
-- **Force from the map** for guarded worktrees, with its own warning; the branch stays in the repo and files stay in the trash.
-- **Marks survive** restarts and updates (`$XDG_STATE_HOME/huskmap/session.json`).
-- **Updates**: a daily check against GitHub Releases, SHA256-verified, installed the way huskmap was installed (deb, rpm, pacman, apk, portable). `huskmap update`, or `HUSKMAP_NO_UPDATE_CHECK=1`.
-- **Install anywhere**: `.deb`, `.rpm`, `.pkg.tar.zst`, `.apk`, portable `tar.gz`, and `install.sh`, which waits for a running apply and reopens the map with its marks.
-- **Light and dark themes**: Daylight and Afterlife, or follow the desktop. Switch with `t` or from the status bar.
-- **How it works**: an in-app guide that opens on first launch and on `?`.
-- **Filters**: chips and a typed query language (`kind:deps size:>500mb age:>30d -is:blocked`), in English or Portuguese, shared by the map and the list. Sortable list columns and "Mark N removable".
-- **English and Brazilian Portuguese**, in plain words, chosen by flag, saved pick, then timezone/locale (Brazil reads pt-BR).
-- CLI: `scan`, `doctor`, `plan`, `apply`, `map` (TUI), `update`, `completions`; man page.
+- **A map of what AI coding agents left on your disk**: worktrees, dependency folders (`node_modules`, `target`, `.venv`, `.next`, `.turbo` and friends, only when their project file is there), package caches (npm, pnpm, yarn, bun, pip, uv, poetry, cargo, go, Playwright), agent sessions matched to their project, agent caches and logs. Claude Code, Codex, Cursor, Grok, Gemini CLI, OpenCode and Aider.
+- **Your work is protected**: folders in use (read from `/proc`) are never removed, not even by force. Uncommitted changes, commits that exist nowhere else, git locks, the main checkout and secret files keep a folder where it is.
+- **Nothing moves until you confirm**: scanning only reads. On confirm, huskmap checks everything again, moves the items to the system trash (so you can restore them) and removes worktrees from git's list. One removal runs at a time.
+- **Mark anyway** for protected worktrees you are sure about, with its own warning. Branches always stay in the repo.
+- **Filters**: chips above the list, or type them (`kind:deps size:>500mb age:>30d -is:blocked`), in English or Portuguese. Sort by size, age or name, and mark everything visible that can go.
+- **Light and dark themes**, or follow the desktop. Switch with `t`.
+- **How it works**: a built-in guide on first launch and on `?`.
+- **English and Brazilian Portuguese**, picked from your settings, timezone or locale, and switchable any time.
+- **Marks survive** restarts and updates.
+- **Updates**: a daily check against GitHub Releases, verified with SHA256SUMS and installed the same way huskmap was installed. `huskmap update`, or turn it off with `HUSKMAP_NO_UPDATE_CHECK=1`.
+- **Install anywhere**: `.deb`, `.rpm`, `.pkg.tar.zst`, `.apk`, a portable `.tar.gz`, or `curl … | bash`, which waits for a running removal and reopens the map with your marks.
+- **CLI** for scripts and headless machines: `scan` (with `--json`), `doctor`, `plan`, `apply`, `map` (terminal UI), `update`, `completions` and a man page.
