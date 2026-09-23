@@ -1,16 +1,15 @@
 // Glyphs and brand marks come straight from the desktop app's assets: one set, one source.
 // They ship painted white; here they take `currentColor` so CSS can tint them.
-const glyphs = import.meta.glob("../../../huskmap-gui/assets/icons/*.svg", {
-  query: "?raw",
-  import: "default",
-  eager: true,
-}) as Record<string, string>;
+const glyphs = {
+  ...import.meta.glob("../../../huskmap-gui/assets/icons/*.svg", { query: "?raw", import: "default", eager: true }),
+  // A few glyphs only the website needs, same set and conversion (see assets/icons/LICENSE.md).
+  ...import.meta.glob("../assets/icons/*.svg", { query: "?raw", import: "default", eager: true }),
+} as Record<string, string>;
 
-const brands = import.meta.glob("../../../huskmap-gui/assets/brands/*.svg", {
-  query: "?raw",
-  import: "default",
-  eager: true,
-}) as Record<string, string>;
+const brands = {
+  ...import.meta.glob("../../../huskmap-gui/assets/brands/*.svg", { query: "?raw", import: "default", eager: true }),
+  ...import.meta.glob("../assets/marks/*.svg", { query: "?raw", import: "default", eager: true }),
+} as Record<string, string>;
 
 const distros = import.meta.glob("../assets/distros/*.svg", {
   query: "?raw",
