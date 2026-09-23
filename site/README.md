@@ -28,6 +28,12 @@ npm run build    # astro check, then the static site in dist/
 
   then convert `target/tmp/snapshots/site-map-{en,pt}-{dark,light}.png` to 1480 and
   2960 px WebP in `public/shots/`.
+- **Downloads** come from the latest GitHub release at build time (`src/data/release.mjs`):
+  each card links straight to its `.deb`, `.rpm`, pacman, `.apk` or `.tar.gz`, and a family
+  with no file for that processor shows as unavailable. Before the first release the board
+  says the downloads are on their way. `HUSKMAP_SITE_RELEASE_JSON=release.json` previews a
+  saved release, `HUSKMAP_SITE_OFFLINE=1` skips GitHub. The release workflow calls
+  `SITE_DEPLOY_HOOK_URL` so the board refreshes after each release.
 - **SEO:** canonical and hreflang links, Open Graph and Twitter cards (`public/og.png`),
   `SoftwareApplication` JSON-LD, `sitemap.xml` and `robots.txt`. Lighthouse: 100 on
   performance, accessibility, best practices and SEO.
