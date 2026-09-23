@@ -2,14 +2,12 @@
 
 use freya::animation::*;
 use freya::prelude::*;
-use huskmap_core::{AgentKind, HuskId, HuskKind, copy, format_bytes};
+use huskmap_core::{HuskId, HuskKind, copy, format_bytes};
 
-use crate::components::ui::{
-    agent_mark, caps, display, display_italic, glyph, hairline, keycap, keycap_on, mono,
-};
+use crate::components::ui::{agent_mark, caps, display, display_italic, glyph, hairline, mono};
 use crate::icons::Glyph;
 use crate::theme;
-use crate::view_model::{AlarmRow, AppState, Chip, LegendRow};
+use crate::view_model::{AlarmRow, AppState, LegendRow};
 
 #[derive(PartialEq)]
 pub struct Rail {
@@ -54,28 +52,6 @@ impl Component for CountUp {
     }
 }
 
-fn share_bar(rows: &[LegendRow]) -> Rect {
-    let mut bar = rect()
-        .content(Content::flex())
-        .horizontal()
-        .width(Size::fill())
-        .height(Size::px(4.))
-        .spacing(2.)
-        .corner_radius(2.);
-    let total: f32 = rows.iter().map(|r| r.share).sum::<f32>().max(0.0001);
-    for row in rows.iter().filter(|r| r.share > 0.0) {
-        bar = bar.child(
-            rect()
-                .content(Content::flex())
-                .width(Size::percent(row.share / total * 100.0))
-                .height(Size::fill())
-                .corner_radius(2.)
-                .background(theme::kind_color(row.kind)),
-        );
-    }
-    bar
-}
-
 #[derive(PartialEq)]
 struct AlarmCard {
     row: AlarmRow,
@@ -88,29 +64,18 @@ impl Component for AlarmCard {
         let mut hovered = use_state(|| false);
         let mut state = self.state;
         let id: HuskId = self.row.id.clone();
-        let tone = theme::tone_color(self.row.tone);
         let lit = *hovered.read() || self.selected;
         let mut card = rect()
             .content(Content::flex())
             .width(Size::fill())
-            .padding((10., 12.))
-            .spacing(5.)
-            .corner_radius(theme::RADIUS)
+            .padding((9., 10.))
+            .spacing(4.)
+            .corner_radius(theme::RADIUS + 3.)
             .background(if lit {
-                theme::carbon_hover()
+                Color::from(theme::carbon_hover())
             } else {
-                theme::carbon_raised()
+                Color::TRANSPARENT
             })
-            .border(
-                Border::new()
-                    .fill(theme::mix(
-                        theme::carbon_raised(),
-                        tone,
-                        if lit { 0.7 } else { 0.35 },
-                    ))
-                    .width(1.)
-                    .alignment(BorderAlignment::Inner),
-            )
             .on_pointer_enter(move |_| hovered.set(true))
             .on_pointer_leave(move |_| hovered.set(false))
             .on_press(move |_| {
@@ -132,11 +97,6 @@ impl Component for AlarmCard {
                             .max_lines(1)
                             .text_overflow(TextOverflow::Ellipsis),
                     ),
-            )
-            .child(
-                mono(self.row.path.clone(), theme::TEXT_XS, theme::dust())
-                    .max_lines(1)
-                    .text_overflow(TextOverflow::Ellipsis),
             );
         for (ward, text) in &self.row.lines {
             let c = match ward {
@@ -239,29 +199,6 @@ impl Component for LegendItem {
                                     theme::dust()
                                 },
                             )),
-                    )
-                    .child(keycap(&(self.index + 1).to_string())),
-            )
-            .child(
-                rect()
-                    .content(Content::flex())
-                    .width(Size::fill())
-                    .height(Size::px(2.))
-                    .background(theme::hairline_soft())
-                    .child(
-                        rect()
-                            .content(Content::flex())
-                            .width(Size::percent((row.share * 100.0).max(if row.count > 0 {
-                                1.0
-                            } else {
-                                0.0
-                            })))
-                            .height(Size::fill())
-                            .background(theme::mix(
-                                theme::kind_color(kind),
-                                theme::pitch(),
-                                if row.active { 0.15 } else { 0.7 },
-                            )),
                     ),
             )
     }
@@ -271,29 +208,6 @@ impl Component for LegendItem {
     }
 }
 
-/// Agent marks with how many items each left. Pressing one filters by it.
-fn agents_row(agents: &[(AgentKind, usize, u64)], state: State<AppState>) -> Rect {
-    let mut row = rect()
-        .horizontal()
-        .spacing(14.)
-        .cross_align(Alignment::Center);
-    for (agent, count, _) in agents.iter().take(7) {
-        let mut state = state;
-        let agent_kind = *agent;
-        row = row.child(
-            rect()
-                .content(Content::flex())
-                .horizontal()
-                .spacing(6.)
-                .cross_align(Alignment::Center)
-                .on_press(move |_| state.write().press_chip(Chip::Agent(agent_kind)))
-                .child(agent_mark(Some(*agent), theme::ash(), 15.))
-                .child(mono(count.to_string(), theme::TEXT_SM, theme::dust())),
-        );
-    }
-    row
-}
-
 impl Component for Rail {
     fn render(&self) -> impl IntoElement {
         let d = copy::get();
@@ -301,7 +215,6 @@ impl Component for Rail {
         let (reclaimable, seen) = s.totals();
         let legend = s.legend();
         let alarms = s.alarms();
-        let agents = s.agents();
         let (marked, marked_bytes) = s.marked_summary();
         let generation = s.generation;
         let selected = s.selected.clone();
@@ -395,14 +308,6 @@ impl Component for Rail {
                 } else {
                     theme::dust()
                 },
-            ))
-            .child(keycap_on(
-                "a",
-                if send_ready {
-                    theme::pitch()
-                } else {
-                    theme::dust()
-                },
             ));
 
         rect()
@@ -435,8 +340,7 @@ impl Component for Rail {
                                         d.map_title,
                                         theme::TITLE_MD,
                                         theme::bone(),
-                                    ))
-                                    .child(caps(d.map_subtitle, theme::copper())),
+                                    )),
                             )
                             .child(
                                 rect()
@@ -451,9 +355,7 @@ impl Component for Rail {
                                         d.seen_of.replace("{total}", &format_bytes(seen)),
                                         theme::TEXT_SM,
                                         theme::ash(),
-                                    ))
-                                    .child(rect().height(Size::px(10.)))
-                                    .child(share_bar(&legend)),
+                                    )),
                             )
                             .child(
                                 rect()
@@ -487,8 +389,7 @@ impl Component for Rail {
                                     .child(alarm_list),
                             )
                             .child(hairline())
-                            .child(legend_list)
-                            .child(agents_row(&agents, self.state)),
+                            .child(legend_list),
                     ),
             )
             .child(
