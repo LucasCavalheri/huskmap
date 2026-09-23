@@ -15,7 +15,7 @@ const lang = locale === "en" ? "en" : "pt";
 const other = dictionaries[otherLocale(locale)];
 
 const REPO = "https://github.com/LucasCavalheri/huskmap";
-const INSTALL = "curl -fsSL https://raw.githubusercontent.com/LucasCavalheri/huskmap/main/install.sh | bash";
+const INSTALL = "curl -fsSL https://huskmap.lucascavalheri.com.br/install.sh | bash";
 const abs = (path: string) => new URL(path, Astro.site).href;
 const canonical = abs(localePath(locale));
 
@@ -87,7 +87,17 @@ const jsonLd = {
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="preload" href="/fonts/InstrumentSerif-Regular.woff2" as="font" type="font/woff2" crossorigin />
     <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
-    <script is:inline>document.documentElement.classList.add("js");</script>
+    <script is:inline>
+      // Theme before first paint: saved pick, else the system's. No flash.
+      (() => {
+        const d = document.documentElement;
+        d.classList.add("js");
+        let t = null;
+        try { t = localStorage.getItem("huskmap-theme"); } catch {}
+        if (t !== "light" && t !== "dark") t = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        d.dataset.theme = t;
+      })();
+    </script>
   </head>
   <body>
     <a class="skip" href="#main">{t.hero.skip}</a>
@@ -100,6 +110,10 @@ const jsonLd = {
         </a>
         <nav class="links" aria-label={t.nav.label}>
           <a href={REPO}>{t.nav.github}</a>
+          <button class="theme" type="button" data-theme-toggle aria-label={t.nav.theme} title={t.nav.theme}>
+            <Icon name="sun" class="sun" />
+            <Icon name="moon" class="moon" />
+          </button>
           <span class="langs" role="group" aria-label={t.nav.language}>
             {(["en", "pt-BR"] as const).map((l) => {
               const here = l === locale;
@@ -223,6 +237,144 @@ const jsonLd = {
     <script is:inline>
       (() => {
         const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+        const root = document.documentElement;
+
+        // ---- theme: a circle of the new palette opens from the switch ----
+        const toggle = document.querySelector("[data-theme-toggle]");
+        const paint = (theme) => {
+          root.dataset.theme = theme;
+          try { localStorage.setItem("huskmap-theme", theme); } catch {}
+          const meta = document.querySelector('meta[name="theme-color"]');
+          if (meta) meta.content = theme === "dark" ? "#0e0d0b" : "#f6f3ec";
+        };
+        toggle && toggle.addEventListener("click", () => {
+          const next = root.dataset.theme === "dark" ? "light" : "dark";
+          if (still) return paint(next);
+          if (!document.startViewTransition) {
+            root.classList.add("theme-fade");
+            paint(next);
+            setTimeout(() => root.classList.remove("theme-fade"), 500);
+            return;
+          }
+          const r = toggle.getBoundingClientRect();
+          const x = r.left + r.width / 2;
+          const y = r.top + r.height / 2;
+          const end = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
+          document.startViewTransition(() => paint(next)).ready.then(() => {
+            root.animate(
+              { clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${end}px at ${x}px ${y}px)`] },
+              { duration: 720, easing: "cubic-bezier(.22,.8,.2,1)", pseudoElement: "::view-transition-new(root)" },
+            );
+          });
+        });
+
+        // ---- language: stay in place, let the letters turn into the other language ----
+        const GLYPHS = "abcdefghijklmnopqrstuvwxyzáãçéêíóôõú";
+        const textNodes = (body) => {
+          const out = [];
+          const walk = document.createTreeWalker(body, NodeFilter.SHOW_TEXT, {
+            acceptNode: (n) =>
+              !n.nodeValue.trim() || n.parentElement.closest("script,style,svg")
+                ? NodeFilter.FILTER_REJECT
+                : NodeFilter.FILTER_ACCEPT,
+          });
+          while (walk.nextNode()) out.push(walk.currentNode);
+          return out;
+        };
+        const scramble = (node, to, delay) =>
+          new Promise((done) => {
+            const from = node.nodeValue;
+            const len = Math.max(from.length, to.length);
+            const time = Math.min(700, 260 + len * 7);
+            const t0 = performance.now() + delay;
+            const frame = (now) => {
+              const k = Math.max(0, Math.min(1, (now - t0) / time));
+              let s = "";
+              for (let i = 0; i < len; i++) {
+                const at = i / len;
+                const c = to[i] ?? "";
+                if (k >= at * 0.6 + 0.4) s += c;
+                else if (k > at * 0.6) s += c === " " || c === "" ? c : GLYPHS[(Math.random() * GLYPHS.length) | 0];
+                else s += from[i] ?? "";
+              }
+              node.nodeValue = s;
+              if (k < 1) requestAnimationFrame(frame);
+              else {
+                node.nodeValue = to;
+                done();
+              }
+            };
+            requestAnimationFrame(frame);
+          });
+        const ATTRS = ["alt", "aria-label", "title", "srcset", "src", "data-done", "aria-current", "href", "hreflang"];
+        let busy = false;
+        const switchLang = async (href, push) => {
+          if (busy) return;
+          busy = true;
+          try {
+            const res = await fetch(href, { headers: { Accept: "text/html" } });
+            if (!res.ok) throw new Error(String(res.status));
+            const next = new DOMParser().parseFromString(await res.text(), "text/html");
+            const oldEls = [...document.body.querySelectorAll("*")];
+            const newEls = [...next.body.querySelectorAll("*")];
+            const oldText = textNodes(document.body);
+            const newText = textNodes(next.body);
+            if (oldEls.length !== newEls.length || oldText.length !== newText.length) throw new Error("layout differs");
+            oldEls.forEach((el, i) => {
+              const src = newEls[i];
+              for (const a of ATTRS) {
+                const v = src.getAttribute(a);
+                if (v === null) el.removeAttribute(a);
+                else if (el.getAttribute(a) !== v) el.setAttribute(a, v);
+              }
+              if (el.classList.contains("lang")) el.classList.toggle("here", src.classList.contains("here"));
+            });
+            root.lang = next.documentElement.lang;
+            document.title = next.title;
+            for (const sel of ['meta[name="description"]', 'link[rel="canonical"]']) {
+              const a = document.head.querySelector(sel);
+              const b = next.head.querySelector(sel);
+              if (a && b) a.replaceWith(b.cloneNode(true));
+            }
+            if (push) history.pushState({ lang: root.lang }, "", href);
+            // Hold what you are looking at in place while texts above it change length.
+            const probe = document.elementFromPoint(innerWidth / 2, innerHeight * 0.4);
+            const anchor = (probe && probe.closest("h1,h2,h3,p,li,figure,section")) || null;
+            const top0 = anchor ? anchor.getBoundingClientRect().top : 0;
+            let holding = !!anchor && scrollY > 0;
+            const hold = () => {
+              if (!holding) return;
+              const drift = anchor.getBoundingClientRect().top - top0;
+              if (Math.abs(drift) > 0.5) scrollBy({ top: drift, behavior: "instant" });
+              requestAnimationFrame(hold);
+            };
+            requestAnimationFrame(hold);
+            const jobs = [];
+            let n = 0;
+            oldText.forEach((node, i) => {
+              const to = newText[i].nodeValue;
+              if (node.nodeValue === to) return;
+              if (still) node.nodeValue = to;
+              else jobs.push(scramble(node, to, Math.min(n++ * 14, 360)));
+            });
+            await Promise.all(jobs);
+            await new Promise((r) => requestAnimationFrame(r));
+            holding = false;
+          } catch {
+            location.href = href;
+          } finally {
+            busy = false;
+          }
+        };
+        document.addEventListener("click", (e) => {
+          const a = e.target.closest("a[hreflang]");
+          if (!a || e.metaKey || e.ctrlKey || e.shiftKey || a.getAttribute("aria-current") === "page") return;
+          const url = new URL(a.href, location.href);
+          if (url.origin !== location.origin) return;
+          e.preventDefault();
+          switchLang(url.pathname, true);
+        });
+        addEventListener("popstate", () => switchLang(location.pathname, false));
         const top = document.querySelector("[data-top]");
         const onScroll = () => top && top.classList.toggle("scrolled", scrollY > 16);
         addEventListener("scroll", onScroll, { passive: true });
