@@ -1,0 +1,16 @@
+[Desktop Entry]
+Type=Application
+Version=1.5
+Name=huskmap
+GenericName=Agent Afterlife Map
+GenericName[pt_BR]=Mapa do Além dos Agentes
+Comment=Map the worktrees, sessions and ballast your coding agents left behind
+Comment[pt_BR]=Mapeie os worktrees, sessões e lastro que seus agentes deixaram para trás
+Exec=huskmap gui
+TryExec=huskmap
+Icon=huskmap
+Terminal=false
+Categories=Development;RevisionControl;
+Keywords=git;worktree;agents;claude;codex;cursor;node_modules;cache;disk;
+StartupNotify=true
+StartupWMClass=lucas.cavalheri.huskmap
