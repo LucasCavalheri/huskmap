@@ -149,12 +149,6 @@ impl Component for Row {
                         .max_lines(1)
                         .text_overflow(TextOverflow::Ellipsis)
                         .into_element(),
-                        (None, Tone::Free) => mono(
-                            copy::get().tone_free,
-                            theme::TEXT_SM,
-                            theme::mix(theme::verdigris(), theme::pitch(), 0.2),
-                        )
-                        .into_element(),
                         (None, Tone::Caution) => mono(
                             copy::get().tone_caution,
                             theme::TEXT_SM,
@@ -328,52 +322,75 @@ fn button(text: String, accent: bool) -> Rect {
 
 fn filter_bar(bar: &FilterBar, state: State<AppState>) -> Rect {
     let d = copy::get();
+    let (mut s_mark, mut s_clear, mut s_more) = (state, state, state);
+    let more_label = if bar.open {
+        d.filters_less.to_string()
+    } else if bar.hidden_active > 0 {
+        format!("{} · {}", d.filters_more, bar.hidden_active)
+    } else {
+        d.filters_more.to_string()
+    };
+    let mut kinds = rect()
+        .content(Content::Wrap {
+            wrap_spacing: Some(6.),
+        })
+        .horizontal()
+        .width(Size::flex(1.))
+        .spacing(6.);
+    for c in &bar.kinds {
+        kinds = kinds.child(ChipButton {
+            view: c.clone(),
+            state,
+        });
+    }
     let mut panel = rect()
         .content(Content::flex())
         .width(Size::fill())
-        .spacing(8.)
-        .padding((4., 0., 14., 0.))
-        .child(group(d.filter_kind, &bar.kinds, state))
-        .child(group(d.filter_status, &bar.status, state));
-    if !bar.agents.is_empty() {
-        panel = panel.child(group(d.filter_agent, &bar.agents, state));
+        .spacing(10.)
+        .padding((2., 0., 16., 0.))
+        .child(
+            rect()
+                .content(Content::flex())
+                .horizontal()
+                .width(Size::fill())
+                .spacing(12.)
+                .cross_align(Alignment::Center)
+                .child(kinds)
+                .child(
+                    rect()
+                        .on_press(move |_| {
+                            let mut s = s_more.write();
+                            s.filters_open = !s.filters_open;
+                        })
+                        .child(button(more_label, bar.hidden_active > 0 && !bar.open)),
+                ),
+        );
+    if bar.open {
+        panel = panel.child(group(d.filter_status, &bar.status, state));
+        if !bar.agents.is_empty() {
+            panel = panel.child(group(d.filter_agent, &bar.agents, state));
+        }
+        panel = panel
+            .child(group(d.filter_size, &bar.sizes, state))
+            .child(group(d.filter_age, &bar.ages, state));
     }
-    panel = panel.child(
-        rect()
-            .content(Content::flex())
-            .horizontal()
-            .width(Size::fill())
-            .child(
-                rect()
-                    .content(Content::flex())
-                    .width(Size::flex(1.))
-                    .child(group(d.filter_size, &bar.sizes, state)),
-            )
-            .child(
-                rect()
-                    .content(Content::flex())
-                    .width(Size::flex(1.))
-                    .child(group(d.filter_age, &bar.ages, state)),
-            ),
-    );
-    let (mut s_mark, mut s_clear, mut s_help) = (state, state, state);
     let mut actions = rect()
         .content(Content::flex())
         .horizontal()
         .spacing(10.)
         .cross_align(Alignment::Center);
-    if let Some((label, _)) = &bar.mark_all {
-        actions = actions.child(
-            rect()
-                .on_press(move |_| s_mark.write().mark_visible())
-                .child(button(label.clone(), true)),
-        );
-    }
     if bar.filtered {
         actions = actions.child(
             rect()
                 .on_press(move |_| s_clear.write().clear_filters())
                 .child(button(d.filter_clear.into(), false)),
+        );
+    }
+    if let Some((label, _)) = &bar.mark_all {
+        actions = actions.child(
+            rect()
+                .on_press(move |_| s_mark.write().mark_visible())
+                .child(button(label.clone(), true)),
         );
     }
     panel.child(
@@ -383,24 +400,11 @@ fn filter_bar(bar: &FilterBar, state: State<AppState>) -> Rect {
             .width(Size::fill())
             .spacing(14.)
             .cross_align(Alignment::Center)
-            .padding((6., 0., 0., 0.))
-            .child(glyph(Glyph::Filter, theme::dust(), 14.))
-            .child(mono(bar.summary.clone(), theme::TEXT_SM, theme::bone()))
-            .child(
-                rect()
-                    .content(Content::flex())
-                    .width(Size::flex(1.))
-                    .horizontal()
-                    .spacing(6.)
-                    .cross_align(Alignment::Center)
-                    .on_press(move |_| s_help.write().open_guide(5))
-                    .child(glyph(Glyph::Help, theme::dust(), 12.))
-                    .child(
-                        mono(d.filter_hint, theme::TEXT_XS, theme::dust())
-                            .max_lines(1)
-                            .text_overflow(TextOverflow::Ellipsis),
-                    ),
-            )
+            .child(rect().width(Size::flex(1.)).child(mono(
+                bar.summary.clone(),
+                theme::TEXT_SM,
+                theme::ash(),
+            )))
             .child(actions),
     )
 }

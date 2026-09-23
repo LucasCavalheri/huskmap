@@ -295,6 +295,10 @@ pub struct FilterBar {
     pub filtered: bool,
     /// Marks every visible husk that may go; `None` when none may.
     pub mark_all: Option<(String, bool)>,
+    /// Status, agent, size and age chips are showing.
+    pub open: bool,
+    /// Filters set outside the type row, so a closed bar still says something is on.
+    pub hidden_active: usize,
 }
 
 pub const SIZE_STEPS: [&str; 3] = [">10mb", ">100mb", ">1gb"];
@@ -417,6 +421,8 @@ pub struct AppState {
     pub guide_section: usize,
     /// System, light or dark. The window resolves System against the desktop.
     pub theme: crate::theme::ThemeChoice,
+    /// The list shows only the type chips until this opens the rest.
+    pub filters_open: bool,
     pub drawer_open: bool,
     pub confirm: Option<ConfirmView>,
     pub status: Option<String>,
@@ -1135,6 +1141,12 @@ impl AppState {
                 .replace("{total}", &husks.len().to_string())
                 .replace("{bytes}", &format_bytes(bytes)),
             filtered: !Query::parse(text).is_empty(),
+            open: self.filters_open,
+            hidden_active: Query::parse(text)
+                .terms
+                .iter()
+                .filter(|t| !matches!(t.field, query::Field::Kind(_)))
+                .count(),
             mark_all: (!markable.is_empty()).then(|| {
                 let n = markable.len().to_string();
                 if all_marked {
@@ -2023,6 +2035,14 @@ mod tests {
             assert_eq!(s.visible().len(), 4);
             s.press_chip(Chip::Status(Status::Free));
             assert_eq!(s.search, "tipo:worktree,deps status:livre");
+            let bar = s.filter_bar();
+            assert!(!bar.open, "only the type row shows at first");
+            assert_eq!(
+                bar.hidden_active, 1,
+                "the closed bar still says a filter is on"
+            );
+            s.filters_open = true;
+            assert!(s.filter_bar().open);
             assert_eq!(s.visible().len(), 1, "only the node_modules is free");
             let bar = s.filter_bar();
             assert!(bar.filtered && bar.kinds[0].active && !bar.kinds[2].active);
