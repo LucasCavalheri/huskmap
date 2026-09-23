@@ -1,0 +1,15 @@
+/target
+**/*.rs.bk
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Never commit scan results from a real machine.
+*.huskmap.json
+last-report.json
+/tmp-scan*
+lcov.info
+/coverage/
+/link-libs/

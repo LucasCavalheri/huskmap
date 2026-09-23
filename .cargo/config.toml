@@ -1,0 +1,9 @@
+[alias]
+cov = "llvm-cov --package huskmap-core --html --fail-under-lines 95 --fail-under-functions 90"
+cov-open = "llvm-cov --package huskmap-core --open --fail-under-lines 95"
+cov-report = "llvm-cov --package huskmap-core --lcov --output-path lcov.info --fail-under-lines 95"
+
+# Unversioned .so stubs live in ./link-libs (see README). Needed to link Freya/Skia
+# without distro -dev packages.
+[target.x86_64-unknown-linux-gnu]
+rustflags = ["-L", "native=link-libs"]

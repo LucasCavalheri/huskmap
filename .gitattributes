@@ -1,0 +1,18 @@
+# GitHub Linguist: this repository is Rust.
+# Non-Rust files are documentation, generated, or fixtures.
+
+* linguist-vendored
+*.rs linguist-vendored=false
+*.rs linguist-detectable=true
+*.rs linguist-language=Rust
+
+*.md linguist-documentation
+LICENSE linguist-documentation
+AGENTS.md linguist-documentation
+CLAUDE.md linguist-documentation
+COVERAGE.md linguist-documentation
+
+Cargo.lock linguist-generated
+*.toml linguist-vendored
+.gitattributes linguist-vendored
+.gitignore linguist-vendored

@@ -1,0 +1,44 @@
+[workspace]
+resolver = "3"
+members = ["huskmap-core", "huskmap-cli", "huskmap-gui"]
+default-members = ["huskmap-core", "huskmap-cli", "huskmap-gui"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+rust-version = "1.88"
+authors = ["huskmap contributors"]
+description = "Map the afterlife of agent worktrees, sessions, and ballast."
+repository = "https://github.com/LucasCavalheri/huskmap"
+homepage = "https://github.com/LucasCavalheri/huskmap"
+
+[workspace.dependencies]
+huskmap-core = { path = "huskmap-core" }
+huskmap-gui = { path = "huskmap-gui" }
+anyhow = "1"
+clap = { version = "4", features = ["derive", "env"] }
+crossterm = "0.29"
+dirs = "6"
+freya = { version = "0.4.3", features = ["engine", "plot", "sdk-tokio"] }
+git2 = "0.21"
+ratatui = "0.30"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tempfile = "3"
+thiserror = "2"
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "fs"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+trash = "5"
+walkdir = "2"
+
+# Skia, layout and text shaping are painfully slow unoptimized; a debug window should still
+# scroll at 60fps. Our own crates stay debuggable.
+[profile.dev.package."*"]
+opt-level = 2
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = "debuginfo"
