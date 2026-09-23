@@ -1,0 +1,218 @@
+---
+// The husk map as a living SVG: slices are types, distance is age, size is weight, color
+// is what you may do. Pure CSS motion: a beam sweeps, each blip lights up as it passes.
+interface Props {
+  labels: string[];
+  ariaLabel: string;
+}
+const { labels, ariaLabel } = Astro.props;
+
+const SWEEP = 12; // seconds per turn
+const R = 400;
+const INNER = 0.2;
+const OUTER = 0.96;
+const ageRadius = (days: number) => {
+  const t = Math.min(1, Math.log1p(days * 24) / Math.log1p(365 * 24));
+  return R * (INNER + (OUTER - INNER) * t);
+};
+
+// A small, stable PRNG so the map looks the same on every build.
+let seed = 7;
+const rand = () => {
+  seed = (seed * 16807) % 2147483647;
+  return (seed - 1) / 2147483646;
+};
+
+type Tone = "free" | "caution" | "guarded" | "blocked";
+// count, tone mix and weight range per slice, clockwise from twelve o'clock
+const slices: { n: number; tones: Tone[]; w: [number, number]; age: [number, number] }[] = [
+  { n: 7, tones: ["caution", "caution", "guarded", "blocked", "caution", "guarded", "caution"], w: [5, 11], age: [0.01, 200] },
+  { n: 10, tones: ["free"], w: [4, 13], age: [0.3, 300] },
+  { n: 5, tones: ["free"], w: [9, 16], age: [0.01, 8] },
+  { n: 22, tones: ["caution", "caution", "caution", "guarded", "blocked"], w: [2.5, 5], age: [1, 330] },
+  { n: 4, tones: ["free", "caution"], w: [3, 9], age: [0.1, 20] },
+  { n: 3, tones: ["free"], w: [2.5, 4], age: [0.1, 4] },
+];
+
+const sweep = 360 / 6;
+const blips = slices.flatMap((s, i) =>
+  Array.from({ length: s.n }, (_, k) => {
+    const deg = i * sweep + 5 + rand() * (sweep - 10);
+    const days = s.age[0] * Math.pow(s.age[1] / s.age[0], rand());
+    const r = ageRadius(days);
+    const rad = (deg * Math.PI) / 180;
+    return {
+      x: +(r * Math.sin(rad)).toFixed(1),
+      y: +(-r * Math.cos(rad)).toFixed(1),
+      size: +(s.w[0] + rand() * (s.w[1] - s.w[0])).toFixed(1),
+      tone: s.tones[k % s.tones.length],
+      deg: +deg.toFixed(1),
+      order: rand(),
+    };
+  }),
+);
+const occupied = blips.find((b) => b.tone === "blocked")!;
+const rings = [1, 7, 30, 365].map(ageRadius);
+const beamSlices = Array.from({ length: 14 }, (_, i) => i);
+const wedge = (from: number, to: number) => {
+  const p = (d: number) => {
+    const a = (d * Math.PI) / 180;
+    return `${(R * OUTER * Math.sin(a)).toFixed(1)} ${(-R * OUTER * Math.cos(a)).toFixed(1)}`;
+  };
+  return `M0 0 L${p(from)} A${R * OUTER} ${R * OUTER} 0 0 1 ${p(to)} Z`;
+};
+const labelAt = (i: number) => {
+  const a = ((i * sweep + sweep / 2) * Math.PI) / 180;
+  return { x: +(462 * Math.sin(a)).toFixed(1), y: +(-462 * Math.cos(a)).toFixed(1) + 7 };
+};
+---
+
+<figure class="dial" style={`--sweep:${SWEEP}s`}>
+  <svg viewBox="-520 -520 1040 1040" role="img" aria-label={ariaLabel}>
+    <defs>
+      <radialGradient id="soil">
+        <stop offset="0" stop-color="#2a1a10" stop-opacity=".9" />
+        <stop offset=".55" stop-color="#140f0b" stop-opacity=".6" />
+        <stop offset="1" stop-color="#070706" stop-opacity="0" />
+      </radialGradient>
+      <radialGradient id="core">
+        <stop offset="0" stop-color="#e8ae48" />
+        <stop offset=".35" stop-color="#c97c45" />
+        <stop offset="1" stop-color="#c97c45" stop-opacity="0" />
+      </radialGradient>
+    </defs>
+
+    <circle r="520" fill="url(#soil)" />
+    <circle r={R * OUTER} class="disc" />
+
+    {Array.from({ length: 6 }, (_, i) => (
+      <line class="spoke" x1="0" y1="0" x2="0" y2={-R * OUTER} transform={`rotate(${i * sweep})`} />
+    ))}
+    {rings.map((r) => <circle class="ring" r={r} />)}
+    {Array.from({ length: 120 }, (_, i) => (
+      <line class="tick" class:list={[{ major: i % 10 === 0 }]} x1="0" y1={-R * OUTER} x2="0" y2={-R * OUTER - (i % 10 === 0 ? 14 : 6)} transform={`rotate(${i * 3})`} />
+    ))}
+
+    <g class="beam">
+      {beamSlices.map((k) => (
+        <path d={wedge(-(k + 1) * 3, -k * 3)} style={`opacity:${(0.32 * (1 - k / beamSlices.length) ** 2).toFixed(3)}`} />
+      ))}
+      <line class="beam-edge" x1="0" y1="0" x2="0" y2={-R * OUTER} />
+      <circle class="beam-tip" cx="0" cy={-R * OUTER} r="5" />
+    </g>
+
+    <g class="blips">
+      {blips.map((b) => (
+        <g
+          class={`blip ${b.tone}`}
+          transform={`translate(${b.x} ${b.y})`}
+          style={`--d:${((b.deg / 360) * SWEEP).toFixed(2)}s;--o:${(0.25 + b.order * 1.6).toFixed(2)}s`}
+        >
+          <circle class="halo" r={b.size * 2.4} />
+          <circle class="body" r={b.size} />
+          {b.size > 8 && <circle class="inner" r={b.size * 0.6} />}
+          <circle class="dot" r={Math.max(1.4, b.size * 0.28)} />
+        </g>
+      ))}
+    </g>
+
+    <g transform={`translate(${occupied.x} ${occupied.y})`} class="occupied">
+      <circle r={occupied.size * 1.6} />
+      <circle r={occupied.size * 1.6} style="animation-delay:-.65s" />
+    </g>
+
+    <circle r={R * INNER * 0.55} class="well" />
+    <circle r="34" fill="url(#core)" class="core-glow" />
+    <circle r="6" class="core" />
+
+    {labels.map((text, i) => {
+      const p = labelAt(i);
+      return (
+        <text x={p.x} y={p.y} class="slice-label" text-anchor={p.x > 20 ? "start" : p.x < -20 ? "end" : "middle"}>
+          {text}
+        </text>
+      );
+    })}
+  </svg>
+</figure>
+
+<style>
+  .dial {
+    margin: 0;
+    width: 100%;
+    aspect-ratio: 1;
+    position: relative;
+  }
+  svg {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+  .disc { fill: rgba(13, 13, 11, 0.55); stroke: var(--hairline); stroke-width: 1.2; }
+  .spoke { stroke: var(--hairline); stroke-width: 1; }
+  .ring { fill: none; stroke: rgba(236, 229, 214, 0.06); stroke-dasharray: 2 7; }
+  .tick { stroke: rgba(201, 124, 69, 0.28); stroke-width: 1; }
+  .tick.major { stroke: rgba(201, 124, 69, 0.7); stroke-width: 1.5; }
+  .well { fill: var(--pitch); stroke: var(--hairline); }
+  .core { fill: var(--copper); }
+  .core-glow { animation: breathe 3.2s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+  .slice-label {
+    font: 500 21px/1 var(--mono);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    fill: var(--ash);
+  }
+
+  .beam { animation: spin var(--sweep) linear infinite; transform-origin: 0 0; }
+  .beam path { fill: var(--amber); }
+  .beam-edge { stroke: var(--amber); stroke-width: 2; stroke-opacity: 0.85; }
+  .beam-tip { fill: var(--amber); filter: drop-shadow(0 0 8px var(--amber)); }
+
+  .blip { --tone: var(--verdigris); opacity: 0; animation: appear 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) var(--o) forwards; }
+  .blip.caution { --tone: var(--amber); }
+  .blip.guarded { --tone: var(--copper); }
+  .blip.blocked { --tone: var(--oxblood); }
+  .blip .body { fill: color-mix(in srgb, var(--tone) 26%, var(--pitch)); stroke: var(--tone); stroke-width: 1.4; }
+  .blip .inner { fill: none; stroke: var(--tone); stroke-opacity: 0.35; }
+  .blip .dot { fill: color-mix(in srgb, var(--tone) 75%, var(--bone)); }
+  .blip .halo {
+    fill: var(--tone);
+    opacity: 0;
+    filter: blur(6px);
+    animation: lit var(--sweep) linear var(--d) infinite;
+  }
+
+  .occupied circle {
+    fill: none;
+    stroke: var(--oxblood);
+    stroke-width: 2;
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: pulse 1.3s ease-out infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes appear {
+    from { opacity: 0; scale: 0.2; }
+    to { opacity: 1; scale: 1; }
+  }
+  @keyframes lit {
+    0% { opacity: 0.85; }
+    14% { opacity: 0; }
+    100% { opacity: 0; }
+  }
+  @keyframes pulse {
+    from { opacity: 0.9; scale: 1; }
+    to { opacity: 0; scale: 2.6; }
+  }
+  @keyframes breathe {
+    0%, 100% { opacity: 0.7; scale: 1; }
+    50% { opacity: 1; scale: 1.25; }
+  }
+  .blip { transform-box: fill-box; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .beam, .blip .halo, .occupied circle, .core-glow { animation: none; }
+    .blip { animation: none; opacity: 1; }
+  }
+</style>

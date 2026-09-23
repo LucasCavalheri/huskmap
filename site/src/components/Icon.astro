@@ -1,0 +1,14 @@
+---
+import { brand, glyph } from "../lib/icons";
+
+interface Props {
+  name: string;
+  /** Brand marks carry a label; glyphs are decorative. */
+  brand?: string;
+  class?: string;
+}
+const { name, brand: label, class: cls } = Astro.props;
+const svg = label ? brand(name, label) : glyph(name);
+---
+
+<span class:list={["icon", cls]} set:html={svg} />
