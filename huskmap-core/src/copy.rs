@@ -310,6 +310,9 @@ pub struct Deck {
     pub action_worktree_remove: &'static str,
     pub lang_en: &'static str,
     pub lang_pt: &'static str,
+    pub theme_system: &'static str,
+    pub theme_light: &'static str,
+    pub theme_dark: &'static str,
 }
 
 pub const BINARY: &str = "huskmap";
@@ -526,6 +529,7 @@ const GUIDE_EN: Guide = Guide {
                 item(Key, "tab", "Switch between map and list"),
                 item(Key, "s", "Scan again"),
                 item(Key, "esc", "Close, or clear filters"),
+                item(Key, "t", "Theme: system, light or dark"),
                 item(Key, "?", "This guide"),
             ],
         },
@@ -748,6 +752,7 @@ const GUIDE_PT: Guide = Guide {
                 item(Key, "tab", "Trocar entre mapa e lista"),
                 item(Key, "s", "Escanear de novo"),
                 item(Key, "esc", "Fechar, ou limpar os filtros"),
+                item(Key, "t", "Tema: sistema, claro ou escuro"),
                 item(Key, "?", "Este guia"),
             ],
         },
@@ -944,6 +949,9 @@ pub const EN: Deck = Deck {
     action_worktree_remove: "worktree-remove",
     lang_en: "EN",
     lang_pt: "PT",
+    theme_system: "System",
+    theme_light: "Light",
+    theme_dark: "Dark",
 };
 
 pub const PT_BR: Deck = Deck {
@@ -1136,6 +1144,9 @@ pub const PT_BR: Deck = Deck {
     action_worktree_remove: "remover-worktree",
     lang_en: "EN",
     lang_pt: "PT",
+    theme_system: "Sistema",
+    theme_light: "Claro",
+    theme_dark: "Escuro",
 };
 
 pub const ABOUT: &str = EN.about;

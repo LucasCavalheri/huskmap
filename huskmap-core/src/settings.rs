@@ -22,6 +22,8 @@ pub struct Settings {
     pub skipped_version: Option<String>,
     /// The "How it works" guide was closed once; it no longer opens by itself.
     pub guide_seen: bool,
+    /// `system`, `light` or `dark`. `None` follows the desktop.
+    pub theme: Option<String>,
 }
 
 impl Default for Settings {
@@ -32,6 +34,7 @@ impl Default for Settings {
             last_update_check_ms: None,
             skipped_version: None,
             guide_seen: false,
+            theme: None,
         }
     }
 }
@@ -100,6 +103,10 @@ mod tests {
         let partial = Settings::load(tmp.path());
         assert!(partial.check_updates, "missing keys take defaults");
         assert!(!partial.guide_seen, "people upgrading see the guide once");
+        assert_eq!(
+            partial.theme, None,
+            "the desktop decides until someone picks"
+        );
         let blocked = tmp.path().join("file");
         std::fs::write(&blocked, "x").unwrap();
         assert!(Settings::default().save(&blocked).is_err());
