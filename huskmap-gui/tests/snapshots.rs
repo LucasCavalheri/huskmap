@@ -16,7 +16,7 @@ use huskmap_core::{
 };
 use huskmap_gui::app::HuskmapApp;
 use huskmap_gui::fonts::FONTS;
-use huskmap_gui::theme;
+use huskmap_gui::theme::{self, ThemeChoice};
 use huskmap_gui::view_model::{AppState, Phase, ViewMode};
 
 const DAY: u64 = 86_400_000;
@@ -222,8 +222,23 @@ fn png_ok(path: &Path) {
 
 #[test]
 fn frames() {
-    let base = AppState::with_report(report());
+    let mut base = AppState::with_report(report());
+    base.theme = ThemeChoice::Dark;
     let map = render("01-map", base.clone(), Locale::En);
+
+    let mut light = base.clone();
+    light.theme = ThemeChoice::Light;
+    png_ok(&render("11-map-light", light.clone(), Locale::PtBr));
+    let mut light_list = light.clone();
+    light_list.mode = ViewMode::Ledger;
+    png_ok(&render("12-list-light", light_list, Locale::En));
+    let mut light_drawer = light.clone();
+    light_drawer.selected = light_drawer.alarms().first().map(|a| a.id.clone());
+    light_drawer.drawer_open = true;
+    png_ok(&render("13-drawer-light", light_drawer, Locale::PtBr));
+    let mut light_guide = light;
+    light_guide.open_guide(2);
+    png_ok(&render("14-guide-light", light_guide, Locale::En));
     png_ok(&map);
 
     let mut drawer = base.clone();
@@ -305,9 +320,19 @@ fn frames() {
     upd.update_open = true;
     png_ok(&render("08-update", upd, Locale::PtBr));
 
-    png_ok(&render("05-idle", AppState::default(), Locale::En));
+    png_ok(&render(
+        "05-idle",
+        AppState {
+            theme: ThemeChoice::Dark,
+            ..AppState::default()
+        },
+        Locale::En,
+    ));
 
-    let mut scanning = AppState::default();
+    let mut scanning = AppState {
+        theme: ThemeChoice::Dark,
+        ..AppState::default()
+    };
     scanning.begin_scan();
     scanning.phase = Phase::Scanning {
         walking: Some("~/Documentos".into()),
@@ -316,7 +341,10 @@ fn frames() {
     scanning.live = report().husks.into_iter().take(20).collect();
     png_ok(&render("06-scanning", scanning, Locale::En));
 
-    let mut failed = AppState::default();
+    let mut failed = AppState {
+        theme: ThemeChoice::Dark,
+        ..AppState::default()
+    };
     failed.fail("permission denied at ~/dev".into());
     png_ok(&render("07-failed", failed, Locale::En));
     copy::set_locale(Locale::En);
@@ -366,42 +394,46 @@ fn ledger_scrolls() {
 #[test]
 #[ignore]
 fn site_frames() {
-    for (locale, tag) in [(Locale::En, "en"), (Locale::PtBr, "pt")] {
-        copy::set_locale(locale);
-        let base = AppState::with_report(synthetic());
-        png_ok(&render(&format!("site-map-{tag}"), base.clone(), locale));
+    for (locale, lang) in [(Locale::En, "en"), (Locale::PtBr, "pt")] {
+        for (choice, shade) in [(ThemeChoice::Dark, "dark"), (ThemeChoice::Light, "light")] {
+            let tag = format!("{lang}-{shade}");
+            copy::set_locale(locale);
+            let mut base = AppState::with_report(synthetic());
+            base.theme = choice;
+            png_ok(&render(&format!("site-map-{tag}"), base.clone(), locale));
 
-        let mut drawer = base.clone();
-        drawer.selected = drawer.alarms().first().map(|a| a.id.clone());
-        drawer.drawer_open = true;
-        png_ok(&render(&format!("site-drawer-{tag}"), drawer, locale));
+            let mut drawer = base.clone();
+            drawer.selected = drawer.alarms().first().map(|a| a.id.clone());
+            drawer.drawer_open = true;
+            png_ok(&render(&format!("site-drawer-{tag}"), drawer, locale));
 
-        let mut list = base.clone();
-        list.mode = ViewMode::Ledger;
-        copy::set_locale(locale);
-        list.press_chip(huskmap_gui::view_model::Chip::Kind(
-            huskmap_core::HuskKind::Ballast,
-        ));
-        list.press_chip(huskmap_gui::view_model::Chip::Kind(
-            huskmap_core::HuskKind::Worktree,
-        ));
-        png_ok(&render(&format!("site-list-{tag}"), list, locale));
+            let mut list = base.clone();
+            list.mode = ViewMode::Ledger;
+            copy::set_locale(locale);
+            list.press_chip(huskmap_gui::view_model::Chip::Kind(
+                huskmap_core::HuskKind::Ballast,
+            ));
+            list.press_chip(huskmap_gui::view_model::Chip::Kind(
+                huskmap_core::HuskKind::Worktree,
+            ));
+            png_ok(&render(&format!("site-list-{tag}"), list, locale));
 
-        let mut confirm = base.clone();
-        let free: Vec<_> = confirm
-            .visible()
-            .iter()
-            .filter(|h| huskmap_core::admissible(h, false))
-            .take(5)
-            .map(|h| h.id.clone())
-            .collect();
-        confirm.marked = free.into_iter().collect();
-        confirm.open_confirm();
-        png_ok(&render(&format!("site-confirm-{tag}"), confirm, locale));
+            let mut confirm = base.clone();
+            let free: Vec<_> = confirm
+                .visible()
+                .iter()
+                .filter(|h| huskmap_core::admissible(h, false))
+                .take(5)
+                .map(|h| h.id.clone())
+                .collect();
+            confirm.marked = free.into_iter().collect();
+            confirm.open_confirm();
+            png_ok(&render(&format!("site-confirm-{tag}"), confirm, locale));
 
-        let mut guide = base.clone();
-        guide.open_guide(2);
-        png_ok(&render(&format!("site-guide-{tag}"), guide, locale));
+            let mut guide = base.clone();
+            guide.open_guide(2);
+            png_ok(&render(&format!("site-guide-{tag}"), guide, locale));
+        }
     }
     copy::set_locale(Locale::En);
 }
