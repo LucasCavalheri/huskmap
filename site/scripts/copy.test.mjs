@@ -34,3 +34,10 @@ test("every screenshot the page asks for exists in both languages and themes", (
     }
   }
 });
+
+test("the site ships the repo's install.sh, unchanged", () => {
+  const repo = readFileSync(new URL("../../install.sh", import.meta.url), "utf8");
+  const served = readFileSync(new URL("../public/install.sh", import.meta.url), "utf8");
+  assert.equal(served, repo);
+  assert.match(repo, /huskmap\.lucascavalheri\.com\.br\/install\.sh/);
+});
