@@ -175,6 +175,14 @@ fn out_dir() -> PathBuf {
     dir
 }
 
+/// `HUSKMAP_SNAPSHOT_SCALE=2` renders retina frames (for the website).
+fn scale() -> f64 {
+    std::env::var("HUSKMAP_SNAPSHOT_SCALE")
+        .ok()
+        .and_then(|s| s.parse().ok())
+        .unwrap_or(1.0)
+}
+
 fn render(name: &str, state: AppState, locale: Locale) -> PathBuf {
     copy::set_locale(locale);
     let app = HuskmapApp {
@@ -184,9 +192,12 @@ fn render(name: &str, state: AppState, locale: Locale) -> PathBuf {
     };
     let (mut t, _) = TestingRunner::new(
         move || app.render().into_element(),
-        freya::prelude::Size2D::new(theme::WINDOW_WIDTH, theme::WINDOW_HEIGHT),
+        freya::prelude::Size2D::new(
+            theme::WINDOW_WIDTH * scale() as f32,
+            theme::WINDOW_HEIGHT * scale() as f32,
+        ),
         |_| {},
-        1.0,
+        scale(),
     );
     let fonts: HashMap<&str, &[u8]> = FONTS
         .iter()
@@ -346,6 +357,51 @@ fn ledger_scrolls() {
         let path = out_dir().join(format!("09-ledger-scrolled-{i}.png"));
         t.render_to_file(&path);
         png_ok(&path);
+    }
+    copy::set_locale(Locale::En);
+}
+
+/// Frames for the website, in both languages, from the synthetic report only.
+/// `HUSKMAP_SNAPSHOT_SCALE=2 cargo test -p huskmap-gui --features desktop --test snapshots site_frames -- --ignored`
+#[test]
+#[ignore]
+fn site_frames() {
+    for (locale, tag) in [(Locale::En, "en"), (Locale::PtBr, "pt")] {
+        copy::set_locale(locale);
+        let base = AppState::with_report(synthetic());
+        png_ok(&render(&format!("site-map-{tag}"), base.clone(), locale));
+
+        let mut drawer = base.clone();
+        drawer.selected = drawer.alarms().first().map(|a| a.id.clone());
+        drawer.drawer_open = true;
+        png_ok(&render(&format!("site-drawer-{tag}"), drawer, locale));
+
+        let mut list = base.clone();
+        list.mode = ViewMode::Ledger;
+        copy::set_locale(locale);
+        list.press_chip(huskmap_gui::view_model::Chip::Kind(
+            huskmap_core::HuskKind::Ballast,
+        ));
+        list.press_chip(huskmap_gui::view_model::Chip::Kind(
+            huskmap_core::HuskKind::Worktree,
+        ));
+        png_ok(&render(&format!("site-list-{tag}"), list, locale));
+
+        let mut confirm = base.clone();
+        let free: Vec<_> = confirm
+            .visible()
+            .iter()
+            .filter(|h| huskmap_core::admissible(h, false))
+            .take(5)
+            .map(|h| h.id.clone())
+            .collect();
+        confirm.marked = free.into_iter().collect();
+        confirm.open_confirm();
+        png_ok(&render(&format!("site-confirm-{tag}"), confirm, locale));
+
+        let mut guide = base.clone();
+        guide.open_guide(2);
+        png_ok(&render(&format!("site-guide-{tag}"), guide, locale));
     }
     copy::set_locale(Locale::En);
 }
