@@ -1,0 +1,25 @@
+[package]
+name = "huskmap-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+description = "Scan, classify, size, plan, and apply for huskmap. No UI."
+
+[dependencies]
+git2.workspace = true
+rayon = "1.12.0"
+serde.workspace = true
+serde_json.workspace = true
+sha2 = "0.11.0"
+thiserror.workspace = true
+tracing.workspace = true
+trash.workspace = true
+ureq = { version = "2", default-features = false, features = ["tls"] }
+walkdir.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
