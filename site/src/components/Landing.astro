@@ -1,6 +1,7 @@
 ---
 import "../styles/global.css";
 import Icon from "./Icon.astro";
+import Downloads from "./Downloads.astro";
 import { AGENTS } from "../lib/icons";
 import { dictionaries, localePath, otherLocale, type Locale } from "../i18n";
 
@@ -179,10 +180,12 @@ const jsonLd = {
             <button class="copy" type="button" data-copy={INSTALL} data-done={t.hero.copied}>{t.hero.copy}</button>
           </div>
           <p>
-            {t.install.note} <a href={`${REPO}/releases/latest`}>{t.install.releases}</a>
+            {t.install.note} <a href="#download">{t.install.releases} ↓</a>
           </p>
         </div>
       </section>
+
+      <Downloads t={t} locale={t.htmlLang} />
     </main>
 
     <footer class="foot">

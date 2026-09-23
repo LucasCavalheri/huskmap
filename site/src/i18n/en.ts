@@ -58,7 +58,28 @@ export const en = {
   install: {
     title: "One line. Any Linux.",
     note: ".deb, .rpm, pacman, .apk or a portable .tar.gz, checked against SHA256SUMS.",
-    releases: "All downloads",
+    releases: "Or download a package",
+  },
+
+  download: {
+    title: "Download",
+    lead: "Pick your processor, then your Linux. The file comes straight from GitHub.",
+    archLabel: "Processor",
+    arch: { x86_64: "Intel / AMD", aarch64: "ARM64" },
+    families: {
+      deb: "Debian, Ubuntu, Mint",
+      rpm: "Fedora, openSUSE, RHEL",
+      pacman: "Arch, Manjaro",
+      apk: "Alpine",
+      tar: "Gentoo, Void, NixOS, any Linux",
+    },
+    get: "Download",
+    unavailable: "Not built for this processor",
+    soonShort: "Soon",
+    soon: "The first release is on its way. The downloads open here as soon as it is out.",
+    version: "Version {v}",
+    sums: "Checksums (SHA256SUMS)",
+    notes: "Release notes",
   },
 
   footer: {

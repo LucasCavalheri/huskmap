@@ -58,7 +58,28 @@ export const ptBR: Dictionary = {
   install: {
     title: "Uma linha. Qualquer Linux.",
     note: ".deb, .rpm, pacman, .apk ou um .tar.gz portátil, conferidos com o SHA256SUMS.",
-    releases: "Todos os downloads",
+    releases: "Ou baixe um pacote",
+  },
+
+  download: {
+    title: "Baixar",
+    lead: "Escolha o processador, depois o seu Linux. O arquivo vem direto do GitHub.",
+    archLabel: "Processador",
+    arch: { x86_64: "Intel / AMD", aarch64: "ARM64" },
+    families: {
+      deb: "Debian, Ubuntu, Mint",
+      rpm: "Fedora, openSUSE, RHEL",
+      pacman: "Arch, Manjaro",
+      apk: "Alpine",
+      tar: "Gentoo, Void, NixOS, qualquer Linux",
+    },
+    get: "Baixar",
+    unavailable: "Sem build para este processador",
+    soonShort: "Em breve",
+    soon: "A primeira versão está a caminho. Os downloads abrem aqui assim que ela sair.",
+    version: "Versão {v}",
+    sums: "Checksums (SHA256SUMS)",
+    notes: "Novidades",
   },
 
   footer: {
