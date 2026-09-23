@@ -21,6 +21,7 @@ export const ptBR: Dictionary = {
     label: "Navegação principal",
     home: "Início do huskmap",
     language: "Idioma",
+    theme: "Alternar entre claro e escuro",
     install: "Instalar",
     github: "GitHub",
     other: "View in English",

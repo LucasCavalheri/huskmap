@@ -21,6 +21,7 @@ export const en = {
     label: "Main navigation",
     home: "huskmap home",
     language: "Language",
+    theme: "Switch between light and dark",
     install: "Install",
     github: "GitHub",
     other: "Ver em português",
