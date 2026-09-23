@@ -648,3 +648,78 @@ img {
     transform: none;
   }
 }
+
+/* ---- icons in text ---- */
+
+.pill,
+.btn,
+.nav-gh,
+.text-link,
+.foot nav a,
+.install p,
+.compare-wrap figcaption span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.pill .icon {
+  font-size: 14px;
+  color: var(--accent);
+}
+.btn .icon {
+  font-size: 16px;
+}
+.nav-gh .icon,
+.foot nav .icon {
+  font-size: 15px;
+}
+.text-link .icon {
+  font-size: 15px;
+  transition: transform 0.25s var(--ease);
+}
+.text-link:hover .icon:last-child {
+  transform: translateX(3px);
+}
+.install p {
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.install p .icon {
+  color: var(--moss);
+  font-size: 16px;
+}
+.install p a .icon {
+  color: inherit;
+}
+.compare-wrap figcaption .icon {
+  font-size: 14px;
+}
+
+/* copy button: the copy glyph flips into a check */
+.copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.copy-icons {
+  display: inline-grid;
+  width: 14px;
+  height: 14px;
+}
+.copy-icons .icon {
+  grid-area: 1 / 1;
+  font-size: 14px;
+  transition: transform 0.35s var(--ease), opacity 0.25s;
+}
+.copy .i-check {
+  opacity: 0;
+  transform: scale(0.4) rotate(-45deg);
+}
+.copy.done .i-copy {
+  opacity: 0;
+  transform: scale(0.4) rotate(45deg);
+}
+.copy.done .i-check {
+  opacity: 1;
+  transform: none;
+}

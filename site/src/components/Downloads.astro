@@ -43,7 +43,7 @@ const marks = (names: string[]) => names.map((n) => distro(n)).join("");
                   {file ? (
                     <>
                       <span>{formatSize(file.size, locale)}</span>
-                      <span class="dl-get">{d.get} <Icon name="arrow-right" /></span>
+                      <span class="dl-get"><Icon name="download" /> {d.get}</span>
                     </>
                   ) : (
                     <span>{downloads ? d.unavailable : d.soonShort}</span>
@@ -72,13 +72,13 @@ const marks = (names: string[]) => names.map((n) => distro(n)).join("");
         {downloads ? (
           <>
             {d.version.replace("{v}", downloads.version)} ·{" "}
-            {downloads.sums && <a href={downloads.sums}>{d.sums}</a>}
+            {downloads.sums && <a href={downloads.sums}><Icon name="shield" /> {d.sums}</a>}
             {downloads.sums && " · "}
-            <a href={downloads.page}>{d.notes}</a>
+            <a href={downloads.page}><Icon name="notes" /> {d.notes}</a>
           </>
         ) : (
           <>
-            {d.soon} <a href={REPO_URL}>GitHub</a>
+            {d.soon} <a href={REPO_URL}><Icon name="github" brand="GitHub" /> GitHub</a>
           </>
         )}
       </p>
@@ -219,7 +219,12 @@ const marks = (names: string[]) => names.map((n) => distro(n)).join("");
     color: var(--ink);
   }
   a.dl-card:hover .dl-get :global(.icon) {
-    transform: translateX(2px);
+    transform: translateY(2px);
+  }
+  .dl-foot a {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
   }
   .dl-get :global(.icon) {
     transition: transform 0.25s var(--ease);

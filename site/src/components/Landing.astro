@@ -109,7 +109,7 @@ const jsonLd = {
           huskmap
         </a>
         <nav class="links" aria-label={t.nav.label}>
-          <a href={REPO}>{t.nav.github}</a>
+          <a class="nav-gh" href={REPO}><Icon name="github" brand="GitHub" /> {t.nav.github}</a>
           <button class="theme" type="button" data-theme-toggle aria-label={t.nav.theme} title={t.nav.theme}>
             <Icon name="sun" class="sun" />
             <Icon name="moon" class="moon" />
@@ -133,7 +133,7 @@ const jsonLd = {
               );
             })}
           </span>
-          <a class="btn" href="#install">{t.nav.install}</a>
+          <a class="btn" href="#install"><Icon name="download" /> {t.nav.install}</a>
         </nav>
       </div>
     </header>
@@ -151,7 +151,7 @@ const jsonLd = {
           })}
         </svg>
         <div class="wrap hero-inner">
-          <span class="pill rise" style="--d:0s">{t.hero.eyebrow}</span>
+          <span class="pill rise" style="--d:0s"><Icon name="terminal" /> {t.hero.eyebrow}</span>
           <h1 class="display rise" style="--d:.08s">
             {t.hero.titleA}<br /><em>{t.hero.titleB}</em>
           </h1>
@@ -159,9 +159,12 @@ const jsonLd = {
           <div class="actions rise" style="--d:.32s">
             <div class="cmd">
               <code><span class="prompt">$</span> {INSTALL}</code>
-              <button class="copy" type="button" data-copy={INSTALL} data-done={t.hero.copied}>{t.hero.copy}</button>
+              <button class="copy" type="button" data-copy={INSTALL} data-done={t.hero.copied} aria-label={t.hero.copy}>
+                <span class="copy-icons"><Icon name="copy" class="i-copy" /><Icon name="check" class="i-check" /></span>
+                <span data-copy-label>{t.hero.copy}</span>
+              </button>
             </div>
-            <a class="text-link" href={REPO}>{t.hero.github} →</a>
+            <a class="text-link" href={REPO}><Icon name="github" brand="GitHub" /> {t.hero.github} <Icon name="arrow-right" /></a>
           </div>
         </div>
       </section>
@@ -176,9 +179,9 @@ const jsonLd = {
               <input type="range" min="0" max="100" value="50" aria-label={t.compare.drag} />
             </div>
             <figcaption>
-              <span>{t.compare.dark}</span>
+              <span><Icon name="moon" /> {t.compare.dark}</span>
               {t.compare.caption}
-              <span>{t.compare.light}</span>
+              <span>{t.compare.light} <Icon name="sun" /></span>
             </figcaption>
           </figure>
         </div>
@@ -210,10 +213,13 @@ const jsonLd = {
           <h2 class="display">{t.install.title}</h2>
           <div class="cmd">
             <code><span class="prompt">$</span> {INSTALL}</code>
-            <button class="copy" type="button" data-copy={INSTALL} data-done={t.hero.copied}>{t.hero.copy}</button>
+            <button class="copy" type="button" data-copy={INSTALL} data-done={t.hero.copied} aria-label={t.hero.copy}>
+                <span class="copy-icons"><Icon name="copy" class="i-copy" /><Icon name="check" class="i-check" /></span>
+                <span data-copy-label>{t.hero.copy}</span>
+              </button>
           </div>
           <p>
-            {t.install.note} <a href="#download">{t.install.releases} ↓</a>
+            <Icon name="shield" /> {t.install.note} <a href="#download">{t.install.releases} <Icon name="download" /></a>
           </p>
         </div>
       </section>
@@ -225,10 +231,10 @@ const jsonLd = {
       <div class="wrap">
         <span class="brand small"><img src="/icon.svg" alt="" width="18" height="18" /> huskmap</span>
         <nav aria-label="Footer">
-          <a href={REPO}>GitHub</a>
-          <a href={`${REPO}/releases`}>{t.footer.releases}</a>
-          <a href={`${REPO}/blob/main/LICENSE`}>{t.footer.license}</a>
-          <a href={localePath(otherLocale(locale))} hreflang={other.htmlLang}>{t.nav.other}</a>
+          <a href={REPO}><Icon name="github" brand="GitHub" /> GitHub</a>
+          <a href={`${REPO}/releases`}><Icon name="tag" /> {t.footer.releases}</a>
+          <a href={`${REPO}/blob/main/LICENSE`}><Icon name="license" /> {t.footer.license}</a>
+          <a href={localePath(otherLocale(locale))} hreflang={other.htmlLang}><Icon name="language" /> {t.nav.other}</a>
         </nav>
         <small>{t.footer.marks}</small>
       </div>
@@ -418,14 +424,15 @@ const jsonLd = {
         document.querySelectorAll(".reveal").forEach((el) => io.observe(el));
 
         document.querySelectorAll("[data-copy]").forEach((btn) => {
-          const idle = btn.textContent;
+          const label = btn.querySelector("[data-copy-label]");
           btn.addEventListener("click", async () => {
             try {
               await navigator.clipboard.writeText(btn.dataset.copy);
-              btn.textContent = btn.dataset.done;
+              const idle = label.textContent;
+              label.textContent = btn.dataset.done;
               btn.classList.add("done");
               setTimeout(() => {
-                btn.textContent = idle;
+                label.textContent = idle;
                 btn.classList.remove("done");
               }, 1800);
             } catch {}
