@@ -52,7 +52,7 @@ jobs:
       - name: Install build and packaging dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y clang libfontconfig-dev libfreetype-dev libegl-dev libgl-dev libx11-dev libxkbcommon-dev libwayland-dev dpkg-dev rpm zstd
+          sudo apt-get install -y clang libfontconfig-dev libfreetype-dev libegl-dev libgl-dev libgles-dev libx11-dev libxkbcommon-dev libwayland-dev dpkg-dev rpm zstd
       - name: Release tests
         run: cargo test --workspace --all-features --locked --target "${{ matrix.target }}"
       - name: Build release binary
