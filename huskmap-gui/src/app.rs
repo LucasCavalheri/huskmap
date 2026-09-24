@@ -27,6 +27,9 @@ use crate::icons::Brand;
 use crate::theme;
 use crate::view_model::{AppState, Intent, Phase, ViewMode};
 
+/// Window icon for compositors and X11 window managers that read it from the window.
+const WINDOW_ICON: &[u8] = include_bytes!("../../packaging/icons/huskmap-256.png");
+
 /// Wayland app id and X11 class. Must match `packaging/lucas.cavalheri.huskmap.desktop`.
 pub const APP_ID: &str = "lucas.cavalheri.huskmap";
 
@@ -554,6 +557,10 @@ pub fn launch_app() {
         config.with_default_font(theme::MONO_FACE).with_window(
             WindowConfig::new_app(app)
                 .with_title(copy::get().map_title)
+                // Wayland app id / X11 class: lets GNOME, KDE and friends match the window to
+                // `lucas.cavalheri.huskmap.desktop`, so the dock shows our icon, not a gear.
+                .with_app_id(APP_ID)
+                .with_icon(LaunchConfig::window_icon(WINDOW_ICON))
                 .with_size(
                     f64::from(theme::WINDOW_WIDTH),
                     f64::from(theme::WINDOW_HEIGHT),
@@ -628,6 +635,18 @@ mod tests {
         bad.actions = plan_for(tmp.path(), tmp.path()).actions;
         let r = apply_both(&empty, &bad, &git, &rec, &DeadProcessProbe);
         assert_eq!(r.errors.len(), 1, "a refused plan surfaces as an error");
+    }
+
+    /// The dock icon and the launcher entry only work when the window's app id is the
+    /// desktop file's name and its StartupWMClass.
+    #[test]
+    fn app_id_matches_the_desktop_entry() {
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("..");
+        let entry = root.join(format!("packaging/{APP_ID}.desktop"));
+        let text = std::fs::read_to_string(&entry).expect("desktop entry named after APP_ID");
+        assert!(text.contains(&format!("StartupWMClass={APP_ID}")));
+        assert!(text.contains("Icon=huskmap"));
+        assert_eq!(&WINDOW_ICON[1..4], b"PNG");
     }
 
     #[test]
