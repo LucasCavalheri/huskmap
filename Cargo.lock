@@ -2304,7 +2304,7 @@ checksum = "51066092dc750f8cbcac4afa04592377bf7463a911d1beca430ddd788deb0757"
 
 [[package]]
 name = "huskmap-cli"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "anyhow",
  "clap",
@@ -2324,7 +2324,7 @@ dependencies = [
 
 [[package]]
 name = "huskmap-core"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "git2",
  "rayon",
@@ -2341,7 +2341,7 @@ dependencies = [
 
 [[package]]
 name = "huskmap-gui"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "async-channel",
  "freya",

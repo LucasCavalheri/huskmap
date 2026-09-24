@@ -2,6 +2,13 @@
 
 All notable changes to huskmap. Dates are UTC. Versions follow SemVer.
 
+## 0.1.1 - 2026-09-23
+
+- **The map no longer freezes after a scan.** The radar stopped, the dots never appeared and the total read 0 B, because animations that restart on a new scan were being rewound and left stopped. They now run again every time a scan lands; the details panel had the same problem when switching items.
+- **The dock and the app grid show huskmap**, not a generic gear: the window now tells the desktop it is `lucas.cavalheri.huskmap`, so launching, pinning and the icon all match.
+- Clearer launcher name and description, in English and Portuguese.
+- The one-line installer now lives on the website: `curl -fsSL https://huskmap.lucascavalheri.com.br/install.sh | bash`.
+
 ## 0.1.0 - 2026-09-23
 
 First release. Linux only, every Linux.
