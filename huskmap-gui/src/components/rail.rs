@@ -4,7 +4,9 @@ use freya::animation::*;
 use freya::prelude::*;
 use huskmap_core::{HuskId, HuskKind, copy, format_bytes};
 
-use crate::components::ui::{agent_mark, caps, display, display_italic, glyph, hairline, mono};
+use crate::components::ui::{
+    agent_mark, caps, display, display_italic, glyph, hairline, mono, rerun_on_change,
+};
 use crate::icons::Glyph;
 use crate::theme;
 use crate::view_model::{AlarmRow, AppState, LegendRow};
@@ -24,7 +26,7 @@ struct CountUp {
 impl Component for CountUp {
     fn render(&self) -> impl IntoElement {
         let count = use_animation_with_dependencies(&self.generation, |conf, _| {
-            conf.on_creation(OnCreation::Run);
+            rerun_on_change(conf);
             AnimNum::new(0.0, 1.0)
                 .time(theme::MOTION_COUNT)
                 .function(Function::Expo)

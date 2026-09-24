@@ -20,7 +20,7 @@ impl Component for Drawer {
     fn render(&self) -> impl IntoElement {
         let d = copy::get();
         let slide = use_animation_with_dependencies(&self.view.id, |conf, _| {
-            conf.on_creation(OnCreation::Run);
+            crate::components::ui::rerun_on_change(conf);
             AnimNum::new(1.0, 0.0)
                 .time(theme::MOTION_PANEL)
                 .function(Function::Cubic)

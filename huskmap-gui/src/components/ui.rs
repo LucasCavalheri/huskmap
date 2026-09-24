@@ -3,6 +3,7 @@
 use std::cell::RefCell;
 use std::collections::HashMap;
 
+use freya::animation::{AnimConfiguration, OnChange, OnCreation};
 use freya::prelude::*;
 
 use crate::icons::{Brand, Glyph, tinted};
@@ -111,4 +112,32 @@ pub fn keycap(key: &str) -> Rect {
                 .alignment(BorderAlignment::Inner),
         )
         .child(mono(key, theme::TEXT_XS, theme::ash()))
+}
+
+/// For animations that restart when their input changes (a new scan, scanning on or off).
+/// Freya's default on a dependency change is `Reset`, which rewinds and *stops*: the map would
+/// freeze on its first frame after every scan.
+pub fn rerun_on_change(conf: &mut AnimConfiguration) -> &mut AnimConfiguration {
+    conf.on_creation(OnCreation::Run).on_change(OnChange::Rerun)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn animations_rerun_when_their_input_changes() {
+        let mut ours = AnimConfiguration::default();
+        rerun_on_change(&mut ours);
+        let mut expected = AnimConfiguration::default();
+        expected
+            .on_creation(OnCreation::Run)
+            .on_change(OnChange::Rerun);
+        assert_eq!(ours, expected);
+        assert_ne!(
+            ours,
+            AnimConfiguration::default(),
+            "the default resets and stops"
+        );
+    }
 }

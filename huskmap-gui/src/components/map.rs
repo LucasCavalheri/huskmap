@@ -12,7 +12,7 @@ use freya::engine::prelude::{
 use freya::prelude::*;
 use huskmap_core::{HuskId, HuskKind, copy, format_bytes};
 
-use crate::components::ui::{caps, glyph, mono};
+use crate::components::ui::{caps, glyph, mono, rerun_on_change};
 use crate::icons::Glyph;
 use crate::theme::{self, Rgb};
 use crate::view_model::{AppState, INNER_R, MapNode, OUTER_R, Tone, polar, rings, sectors};
@@ -299,8 +299,7 @@ impl Component for HuskMap {
     fn render(&self) -> impl IntoElement {
         let scanning = self.scanning;
         let sweep = use_animation_with_dependencies(&scanning, move |conf, scanning| {
-            conf.on_creation(OnCreation::Run);
-            conf.on_finish(OnFinish::restart());
+            rerun_on_change(conf).on_finish(OnFinish::restart());
             AnimNum::new(0.0, TAU)
                 .time(if *scanning {
                     theme::SWEEP_SCAN
@@ -318,7 +317,7 @@ impl Component for HuskMap {
                 .ease(Ease::Out)
         });
         let reveal = use_animation_with_dependencies(&self.generation, |conf, _| {
-            conf.on_creation(OnCreation::Run);
+            rerun_on_change(conf);
             AnimNum::new(0.0, 1.0)
                 .time(theme::MOTION_REVEAL)
                 .function(Function::Cubic)
