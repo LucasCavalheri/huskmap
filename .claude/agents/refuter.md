@@ -71,7 +71,7 @@ huskmap removes things from people's machines. A false positive is data loss.
 ## 6. Bugs, tests and code quality
 
 - Trace every flow: happy path, empty machine, permission denied, missing git, partial failure mid-apply, cancel, second run.
-- Gate results come from the briefing (§0). Check the coverage numbers there against the floor: 100% target, ≥ 95% lines / ≥ 90% branches on core, residual documented in `COVERAGE.md`.
+- Gate results come from the briefing (§0). Check the coverage numbers there against the floor: 100% target, ≥ 95% lines / ≥ 90% functions on core (CI), branches checked by review because stable `llvm-cov` does not report them, residual documented in `COVERAGE.md`.
 - For each claimed behavior, check that a test would fail if it broke. Tests that only assert a mock was called do not count.
 - Core owns the rules: a rule that exists only in the GUI or CLI is a finding. `thiserror` in core, `anyhow` at the edges, `tracing` not `println!`, no stray `TODO`, no dependency for one helper, no macOS/Windows code paths, XDG dirs honored.
 

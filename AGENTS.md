@@ -110,7 +110,7 @@ If 100% is genuinely unreachable (OS-only branches, FFI, GUI event glue):
 1. Isolate the untestable edge behind a tiny trait.
 2. Cover the trait with fakes in core tests.
 3. Document the residual in `COVERAGE.md` with the exact missed lines and why.
-4. Core still ships at ≥ 95% lines and ≥ 90% branches. Below that is a failed PR.
+4. Core still ships at ≥ 95% lines and ≥ 90% functions (CI enforces both). Stable `llvm-cov` does not report branches, so branches are checked by review (`COVERAGE.md`). Below that is a failed PR.
 
 Rules:
 
