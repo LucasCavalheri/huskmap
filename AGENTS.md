@@ -221,8 +221,8 @@ Every change (feature, fix, refactor, visual change) goes through the **`refuter
 **Before round 1 (you, not the refuter):**
 
 1. Finish the change. One refuter per delivery, never mid-work.
-2. Run the gates and keep each **exit code**: `cargo fmt --check`, `cargo clippy --all-targets -- -D warnings`, `cargo test --workspace`, core coverage and, if dependencies changed, `cargo audit`. All green before calling the refuter: it does not spend tokens finding what a tool finds.
-3. Pick the **tier**: **T0** text only (docs, agent files, comments: one round, no frames); **T1** standard; **T2** sensitive (anything that decides or performs a deletion, the updater, `install.sh`, git/process calls, network): spawn it with `model: "opus"`. When in doubt, go up. The refuter can raise the tier, never lower it.
+2. Run the gates and keep each **exit code**: `cargo fmt --all -- --check`, `cargo clippy --workspace --all-targets --all-features --locked -- -D warnings`, `cargo test --workspace --all-features --locked`, core coverage (`cargo llvm-cov --package huskmap-core --locked --fail-under-lines 95 --fail-under-functions 90 --summary-only`) and, if dependencies changed, `cargo audit` — the same commands as `.github/workflows/ci.yml`. All green before calling the refuter: it does not spend tokens finding what a tool finds.
+3. Pick the **tier**: **T0** text only (docs, agent files, comments: one round, no frames; if it finds a blocker or must-fix, the normal round rules apply); **T1** standard; **T2** sensitive (anything that decides or performs a deletion, the updater, `install.sh`, git/process calls, network): spawn it on the strongest model of your tool (Claude Code: `model: "opus"`). When in doubt, go up. The refuter can raise the tier, never lower it.
 4. If the UI changed, the refuter will capture it at every size (`scripts/screenshots.sh`: every screen at six window sizes from 1120×720 to 2560×1440, and `--video` for motion clips plus a 12-frame strip the refuter can read). Nothing opens a window on the desktop of whoever is using the machine: frames and recordings are always offscreen.
 
 **Round 1 briefing** (everything it needs, so it does not go looking):
@@ -232,7 +232,7 @@ Round 1, tier T1.
 Commits: <sha>..<sha> — <what the delivery does, one line>
 Files: <list>
 Surfaces: <core, CLI, GUI screens, installer; "motion" if an animation or flow changed>
-Gates: fmt → 0 · clippy → 0 · test → 0 · coverage → 97.1% lines / 93.4% branches · audit → not run (Cargo.lock unchanged)
+Gates: fmt → 0 · clippy → 0 · test → 0 · coverage → <NN.N>% lines / <NN.N>% functions · audit → not run (Cargo.lock unchanged)
 Already verified: <what not to redo>
 ```
 

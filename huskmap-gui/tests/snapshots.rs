@@ -6,6 +6,7 @@
 
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
+use std::sync::{Mutex, MutexGuard};
 use std::time::Duration;
 
 use freya::prelude::{App, IntoElement};
@@ -18,6 +19,17 @@ use huskmap_gui::app::HuskmapApp;
 use huskmap_gui::fonts::FONTS;
 use huskmap_gui::theme::{self, ThemeChoice};
 use huskmap_gui::view_model::{AppState, Phase, ViewMode};
+
+/// The palette (`theme::set_light`) and the language (`copy::set_locale`) are process-wide, and
+/// cargo runs tests in parallel: two renders at once would paint one frame in the other's theme.
+/// Every test that renders holds this for its whole run.
+static RENDER: Mutex<()> = Mutex::new(());
+
+fn one_render_at_a_time() -> MutexGuard<'static, ()> {
+    RENDER
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner())
+}
 
 const DAY: u64 = 86_400_000;
 const NOW: u64 = 1_900_000_000_000;
@@ -276,7 +288,7 @@ fn render_at(name: &str, state: AppState, locale: Locale, (w, h): (f32, f32)) ->
     path
 }
 
-/// Website frames: default window size only, whatever `HUSKMAP_SNAPSHOT_SIZES` says.
+/// Website frames: always the default window size; `HUSKMAP_SNAPSHOT_SIZES` does not apply.
 fn site_frame(name: &str, state: AppState, locale: Locale) -> PathBuf {
     render_at(
         name,
@@ -311,6 +323,7 @@ fn png_ok(path: &Path) {
 
 #[test]
 fn frames() {
+    let _render = one_render_at_a_time();
     let mut base = AppState::with_report(report());
     base.theme = ThemeChoice::Dark;
     let map = render("01-map", base.clone(), Locale::En);
@@ -443,6 +456,7 @@ fn frames() {
 /// The list keeps every row drawn while it scrolls (rows used to share one diff key).
 #[test]
 fn ledger_scrolls() {
+    let _render = one_render_at_a_time();
     copy::set_locale(Locale::PtBr);
     let mut state = AppState::with_report(report());
     state.mode = ViewMode::Ledger;
@@ -483,6 +497,7 @@ fn ledger_scrolls() {
 #[test]
 #[ignore]
 fn site_frames() {
+    let _render = one_render_at_a_time();
     for (locale, lang) in [(Locale::En, "en"), (Locale::PtBr, "pt")] {
         for (choice, shade) in [(ThemeChoice::Dark, "dark"), (ThemeChoice::Light, "light")] {
             let tag = format!("{lang}-{shade}");
@@ -529,6 +544,15 @@ fn site_frames() {
         }
     }
     copy::set_locale(Locale::En);
+    let sized: Vec<String> = std::fs::read_dir(out_dir())
+        .unwrap()
+        .filter_map(|entry| entry.ok()?.file_name().into_string().ok())
+        .filter(|name| name.starts_with("site-") && name.contains('@'))
+        .collect();
+    assert!(
+        sized.is_empty(),
+        "site frames must stay default-size: {sized:?}"
+    );
 }
 
 /// Motion clips: one PNG every ~33 ms of app time into `snapshots/clips/<name>/`.
@@ -539,6 +563,7 @@ fn motion_clips() {
     if std::env::var("HUSKMAP_SNAPSHOT_CLIPS").as_deref() != Ok("1") {
         return;
     }
+    let _render = one_render_at_a_time();
     let mut base = AppState::with_report(report());
     base.theme = ThemeChoice::Dark;
 
