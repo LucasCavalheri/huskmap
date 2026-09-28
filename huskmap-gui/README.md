@@ -21,4 +21,12 @@ cargo test -p huskmap-gui --features desktop --test snapshots
 HUSKMAP_SNAPSHOT_REPORT=~/.local/state/huskmap/last-report.json cargo test -p huskmap-gui --features desktop --test snapshots
 ```
 
+Every screen at every window size (1120×720 up to 2560×1440), and motion clips, all offscreen:
+
+```
+scripts/screenshots.sh                  # NAME.png + NAME@WxH.png per size
+scripts/screenshots.sh --sizes 1366x768 # one size
+scripts/screenshots.sh --video          # + clips/NAME.mp4 and clips/NAME-strip.png (12 frames, needs ffmpeg)
+```
+
 Never commit frames rendered from a real home.

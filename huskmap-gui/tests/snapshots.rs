@@ -183,7 +183,72 @@ fn scale() -> f64 {
         .unwrap_or(1.0)
 }
 
+/// Window sizes `scripts/screenshots.sh` renders every frame at, besides the default one.
+/// All of them respect the window's minimum size, like a real resize would.
+const SIZES: [(f32, f32); 6] = [
+    (theme::WINDOW_MIN_WIDTH, theme::WINDOW_MIN_HEIGHT),
+    (1280.0, 800.0),
+    (1366.0, 768.0),
+    (theme::WINDOW_WIDTH, theme::WINDOW_HEIGHT),
+    (1920.0, 1080.0),
+    (2560.0, 1440.0),
+];
+
+/// `HUSKMAP_SNAPSHOT_SIZES=all` (every size in `SIZES`) or `1366x768,1920x1080`.
+/// Unset or empty: only the default window size.
+fn parse_sizes(spec: &str) -> Result<Vec<(f32, f32)>, String> {
+    let spec = spec.trim();
+    if spec.is_empty() {
+        return Ok(vec![]);
+    }
+    if spec == "all" {
+        return Ok(SIZES.to_vec());
+    }
+    spec.split(',')
+        .map(|item| {
+            let item = item.trim();
+            let (w, h) = item
+                .split_once('x')
+                .ok_or_else(|| format!("{item}: expected WIDTHxHEIGHT"))?;
+            let w: f32 = w.parse().map_err(|_| format!("{item}: bad width"))?;
+            let h: f32 = h.parse().map_err(|_| format!("{item}: bad height"))?;
+            if w < theme::WINDOW_MIN_WIDTH || h < theme::WINDOW_MIN_HEIGHT {
+                return Err(format!(
+                    "{item}: below the window minimum {}x{}",
+                    theme::WINDOW_MIN_WIDTH,
+                    theme::WINDOW_MIN_HEIGHT
+                ));
+            }
+            Ok((w, h))
+        })
+        .collect()
+}
+
+fn sizes() -> Vec<(f32, f32)> {
+    let spec = std::env::var("HUSKMAP_SNAPSHOT_SIZES").unwrap_or_default();
+    parse_sizes(&spec).unwrap_or_else(|e| panic!("HUSKMAP_SNAPSHOT_SIZES: {e}"))
+}
+
+/// Renders `name.png` at the default window size, plus `name@WxH.png` for every size
+/// in `HUSKMAP_SNAPSHOT_SIZES`. Returns the default frame.
 fn render(name: &str, state: AppState, locale: Locale) -> PathBuf {
+    for (w, h) in sizes() {
+        png_ok(&render_at(
+            &format!("{name}@{w}x{h}"),
+            state.clone(),
+            locale,
+            (w, h),
+        ));
+    }
+    render_at(
+        name,
+        state,
+        locale,
+        (theme::WINDOW_WIDTH, theme::WINDOW_HEIGHT),
+    )
+}
+
+fn render_at(name: &str, state: AppState, locale: Locale, (w, h): (f32, f32)) -> PathBuf {
     copy::set_locale(locale);
     let app = HuskmapApp {
         initial: state,
@@ -192,10 +257,7 @@ fn render(name: &str, state: AppState, locale: Locale) -> PathBuf {
     };
     let (mut t, _) = TestingRunner::new(
         move || app.render().into_element(),
-        freya::prelude::Size2D::new(
-            theme::WINDOW_WIDTH * scale() as f32,
-            theme::WINDOW_HEIGHT * scale() as f32,
-        ),
+        freya::prelude::Size2D::new(w * scale() as f32, h * scale() as f32),
         |_| {},
         scale(),
     );
@@ -212,6 +274,33 @@ fn render(name: &str, state: AppState, locale: Locale) -> PathBuf {
     let path = out_dir().join(format!("{name}.png"));
     t.render_to_file(&path);
     path
+}
+
+/// Website frames: default window size only, whatever `HUSKMAP_SNAPSHOT_SIZES` says.
+fn site_frame(name: &str, state: AppState, locale: Locale) -> PathBuf {
+    render_at(
+        name,
+        state,
+        locale,
+        (theme::WINDOW_WIDTH, theme::WINDOW_HEIGHT),
+    )
+}
+
+#[test]
+fn snapshot_sizes_parse() {
+    assert_eq!(parse_sizes(""), Ok(vec![]));
+    assert_eq!(parse_sizes("all"), Ok(SIZES.to_vec()));
+    assert_eq!(
+        parse_sizes("1366x768, 1920x1080"),
+        Ok(vec![(1366.0, 768.0), (1920.0, 1080.0)])
+    );
+    assert!(parse_sizes("1366").unwrap_err().contains("WIDTHxHEIGHT"));
+    assert!(parse_sizes("wide x768").unwrap_err().contains("bad width"));
+    assert!(parse_sizes("1366xtall").unwrap_err().contains("bad height"));
+    assert!(parse_sizes("800x600").unwrap_err().contains("minimum"));
+    for (w, h) in SIZES {
+        assert!(w >= theme::WINDOW_MIN_WIDTH && h >= theme::WINDOW_MIN_HEIGHT);
+    }
 }
 
 fn png_ok(path: &Path) {
@@ -400,12 +489,16 @@ fn site_frames() {
             copy::set_locale(locale);
             let mut base = AppState::with_report(synthetic());
             base.theme = choice;
-            png_ok(&render(&format!("site-map-{tag}"), base.clone(), locale));
+            png_ok(&site_frame(
+                &format!("site-map-{tag}"),
+                base.clone(),
+                locale,
+            ));
 
             let mut drawer = base.clone();
             drawer.selected = drawer.alarms().first().map(|a| a.id.clone());
             drawer.drawer_open = true;
-            png_ok(&render(&format!("site-drawer-{tag}"), drawer, locale));
+            png_ok(&site_frame(&format!("site-drawer-{tag}"), drawer, locale));
 
             let mut list = base.clone();
             list.mode = ViewMode::Ledger;
@@ -416,7 +509,7 @@ fn site_frames() {
             list.press_chip(huskmap_gui::view_model::Chip::Kind(
                 huskmap_core::HuskKind::Worktree,
             ));
-            png_ok(&render(&format!("site-list-{tag}"), list, locale));
+            png_ok(&site_frame(&format!("site-list-{tag}"), list, locale));
 
             let mut confirm = base.clone();
             let free: Vec<_> = confirm
@@ -428,12 +521,81 @@ fn site_frames() {
                 .collect();
             confirm.marked = free.into_iter().collect();
             confirm.open_confirm();
-            png_ok(&render(&format!("site-confirm-{tag}"), confirm, locale));
+            png_ok(&site_frame(&format!("site-confirm-{tag}"), confirm, locale));
 
             let mut guide = base.clone();
             guide.open_guide(2);
-            png_ok(&render(&format!("site-guide-{tag}"), guide, locale));
+            png_ok(&site_frame(&format!("site-guide-{tag}"), guide, locale));
         }
     }
     copy::set_locale(Locale::En);
+}
+
+/// Motion clips: one PNG every ~33 ms of app time into `snapshots/clips/<name>/`.
+/// `scripts/screenshots.sh --video` turns each folder into an `.mp4` and a filmstrip.
+/// Off unless `HUSKMAP_SNAPSHOT_CLIPS=1`: a clip is ~75 frames and slow to render.
+#[test]
+fn motion_clips() {
+    if std::env::var("HUSKMAP_SNAPSHOT_CLIPS").as_deref() != Ok("1") {
+        return;
+    }
+    let mut base = AppState::with_report(report());
+    base.theme = ThemeChoice::Dark;
+
+    let mut drawer = base.clone();
+    drawer.selected = drawer.alarms().first().map(|a| a.id.clone());
+    drawer.drawer_open = true;
+
+    let mut scanning = AppState {
+        theme: ThemeChoice::Dark,
+        ..AppState::default()
+    };
+    scanning.begin_scan();
+    scanning.phase = Phase::Scanning {
+        walking: Some("~/Documentos".into()),
+        weighing: None,
+    };
+    scanning.live = report().husks.into_iter().take(20).collect();
+
+    for (name, state) in [
+        ("map-reveal", base),
+        ("drawer-open", drawer),
+        ("scan-pulse", scanning),
+    ] {
+        let dir = out_dir().join("clips").join(name);
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        record(&dir, state, Duration::from_millis(2500));
+        let frames = std::fs::read_dir(&dir).unwrap().count();
+        assert!(frames >= 60, "{name}: only {frames} frames");
+    }
+}
+
+fn record(dir: &Path, state: AppState, length: Duration) {
+    copy::set_locale(Locale::En);
+    let app = HuskmapApp {
+        initial: state,
+        dirs: Dirs::for_home("/nonexistent-huskmap-home"),
+        live: false,
+    };
+    let (mut t, _) = TestingRunner::new(
+        move || app.render().into_element(),
+        freya::prelude::Size2D::new(theme::WINDOW_WIDTH, theme::WINDOW_HEIGHT),
+        |_| {},
+        1.0,
+    );
+    let fonts: HashMap<&str, &[u8]> = FONTS
+        .iter()
+        .filter(|(_, b)| b.len() != 71592)
+        .map(|(n, b)| (*n, *b))
+        .collect();
+    t.set_fonts(fonts);
+    t.set_default_fonts(&[theme::MONO_FACE.into()]);
+    t.sync_and_update();
+    let step = Duration::from_millis(33);
+    let frames = length.as_millis() / step.as_millis();
+    for i in 0..frames {
+        t.poll(Duration::from_millis(11), step);
+        t.render_to_file(dir.join(format!("{i:04}.png")));
+    }
 }
