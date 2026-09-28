@@ -110,7 +110,7 @@ If 100% is genuinely unreachable (OS-only branches, FFI, GUI event glue):
 1. Isolate the untestable edge behind a tiny trait.
 2. Cover the trait with fakes in core tests.
 3. Document the residual in `COVERAGE.md` with the exact missed lines and why.
-4. Core still ships at ≥ 95% lines and ≥ 90% branches. Below that is a failed PR.
+4. Core still ships at ≥ 95% lines and ≥ 90% functions (CI enforces both). Stable `llvm-cov` does not report branches, so branches are checked by review (`COVERAGE.md`). Below that is a failed PR.
 
 Rules:
 
@@ -216,12 +216,33 @@ Do not start on installers, marketing pages, or extra agent adapters before the 
 
 ## Refutation — in rounds, with a limit
 
-Every change (feature, fix, refactor, visual change) goes through the **`refuter`** subagent (`.claude/agents/refuter.md`) before it is called done. No exception for "small" ones.
+Every change (feature, fix, refactor, visual change) goes through the **`refuter`** subagent (`.claude/agents/refuter.md`) before it is called done. No exception for "small" ones. Tokens are limited, so the refuter spends them on **judgment**: whatever is repeated or mechanical comes out of it, the rigor does not (budget rules in its §0).
 
-1. Finish the change, with tests green, clippy and coverage passing.
-2. **Round 1:** run the `refuter`, telling it the round, the commits and the surfaces touched (core, CLI, GUI, installer).
-3. Fix every blocker and must-fix. Fix the should-fix and nice-to-have items too, in the same change; they do not trigger a new round.
-4. **Round 2:** run the `refuter` again **only on the fixes**. It checks each must-fix is gone and looks for regressions in what was touched.
-5. Repeat until zero blocker/must-fix, **at most 3 rounds**. Whatever is still open after round 3 is reported to the human, not hidden.
+**Before round 1 (you, not the refuter):**
+
+1. Finish the change. One refuter per delivery, never mid-work.
+2. Run the gates and keep each **exit code**: `cargo fmt --all -- --check`, `cargo clippy --workspace --all-targets --all-features --locked -- -D warnings`, `cargo test --workspace --all-features --locked`, core coverage (`cargo llvm-cov --package huskmap-core --locked --fail-under-lines 95 --fail-under-functions 90 --summary-only`) and, if dependencies changed, `cargo audit` — the same commands as `.github/workflows/ci.yml`. All green before calling the refuter: it does not spend tokens finding what a tool finds.
+3. Pick the **tier**: **T0** text only (docs, agent files, comments: one round, no frames; if it finds a blocker or must-fix, the normal round rules apply); **T1** standard; **T2** sensitive (anything that decides or performs a deletion, the updater, `install.sh`, git/process calls, network): spawn it on the strongest model of your tool (Claude Code: `model: "opus"`). When in doubt, go up. The refuter can raise the tier, never lower it.
+4. If the UI changed, the refuter will capture it at every size (`scripts/screenshots.sh`: every screen at six window sizes from 1120×720 to 2560×1440, and `--video` for motion clips plus a 12-frame strip the refuter can read). Nothing opens a window on the desktop of whoever is using the machine: frames and recordings are always offscreen.
+
+**Round 1 briefing** (everything it needs, so it does not go looking):
+
+```
+Round 1, tier T1.
+Commits: <sha>..<sha> — <what the delivery does, one line>
+Files: <list>
+Surfaces: <core, CLI, GUI screens, installer; "motion" if an animation or flow changed>
+Gates: fmt → 0 · clippy → 0 · test → 0 · coverage → <NN.N>% lines / <NN.N>% functions · audit → not run (Cargo.lock unchanged)
+Already verified: <what not to redo>
+```
+
+**The loop:**
+
+1. **Round 1:** run the `refuter` with the briefing.
+2. Fix every blocker and must-fix, and the should-fix and nice-to-have items too, all at once, in the same change; small ones do not trigger a new round. Rerun the gates, commit.
+3. **Round 2: continue the same refuter** (Claude Code: `SendMessage` to the round 1 agent; other tools: the equivalent) with the round, the fix commits and the gates. It already read the rules, the code and the frames, so it reviews only the fix diff. Start a new refuter only if the old one is gone, and then pass it the previous report.
+4. Repeat until zero blocker/must-fix, **at most 3 rounds**. Whatever is still open after round 3 is reported to the human, not hidden. A rerun of the sensitive part on the strongest model, when the refuter raised the tier, does not count as a round.
+
+When reporting to the human: how many rounds ran, the tier, what each found and what was fixed, **the tokens of each round** (in the subagent's result) and what was left out and why. Tokens per round show whether the budget works.
 
 If a requirement here conflicts with a comment in code, this file wins until a human edits it.
